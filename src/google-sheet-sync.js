@@ -17,6 +17,25 @@ function fileToBase64(file) {
   });
 }
 
+export async function fetchItemsFromSheet() {
+  if (!isGoogleSheetSyncEnabled()) {
+    return { items: [], skipped: true };
+  }
+  const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "list_items" })
+  });
+  if (!response.ok) {
+    throw new Error("HTTP " + response.status);
+  }
+  const data = await response.json();
+  if (!data.ok) {
+    throw new Error(data.error || "list failed");
+  }
+  return { items: data.items || [], skipped: false };
+}
+
 export async function uploadFileToDrive(file) {
   if (!isGoogleSheetSyncEnabled()) {
     throw new Error("Google Sheet 同步未設定");
@@ -81,7 +100,7 @@ export async function syncRatingToGoogleSheet(item, rating) {
   const params = new URLSearchParams({
     action: "save_rating",
     timestamp: new Date().toISOString(),
-    item_id: item.id || "",
+    item_id: item.createdAt || item.id || "",
     title: item.title || "",
     created_by: rating.createdBy || "",
     useful: String(rating.useful || ""),

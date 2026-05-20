@@ -1,7 +1,7 @@
 import { categoryRules, classify, inferTags } from "./classifier.js";
 import { createItem, schemaFields } from "./data-model.js";
 import { buildExtraction } from "./refine.js";
-import { isGoogleSheetSyncEnabled, syncItemToGoogleSheet, syncRatingToGoogleSheet, uploadFileToDrive } from "./google-sheet-sync.js";
+import { fetchItemsFromSheet, isGoogleSheetSyncEnabled, syncItemToGoogleSheet, syncRatingToGoogleSheet, uploadFileToDrive } from "./google-sheet-sync.js";
 import { averageScore, itemStatus, toFixedScore } from "./rating.js";
 import { clearItems, downloadText, exportCsv, exportJson, loadItems, readJsonFile, saveItems } from "./storage.js";
 
@@ -212,12 +212,87 @@ function renderAll() {
   renderRefineList();
 }
 
+let lastAutoRefresh = 0;
+function maybeAutoRefresh(view) {
+  if (view !== "pool" && view !== "rate") return;
+  if (!isGoogleSheetSyncEnabled()) return;
+  const now = Date.now();
+  if (now - lastAutoRefresh < 8000) return;
+  lastAutoRefresh = now;
+  refreshFromSheet({ silent: true });
+}
+
 function setView(view) {
   document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === view));
   document.querySelectorAll(".nav-btn").forEach(button => button.classList.toggle("active", button.dataset.view === view));
   el("viewTitle").textContent = viewCopy[view][0];
   el("viewIntro").textContent = viewCopy[view][1];
   renderAll();
+  maybeAutoRefresh(view);
+}
+
+function rowToItem(row) {
+  const fileUrlsRaw = String(row.file_urls || "").trim();
+  const parts = fileUrlsRaw.split(/\s*,\s*/).filter(Boolean);
+  const fileUrls = parts.filter(p => /^https?:\/\//i.test(p));
+  const nonUrlNames = parts.filter(p => !/^https?:\/\//i.test(p)).join(", ");
+
+  const createdAt = String(row.created_at || row.timestamp || new Date().toISOString());
+  const updatedAt = String(row.updated_at || createdAt);
+
+  const ratings = (row.ratings || []).map(r => ({
+    useful: Number(r.useful) || 0,
+    copy: Number(r.copy) || 0,
+    insight: Number(r.insight) || 0,
+    convert: Number(r.convert) || 0,
+    fit: Number(r.fit) || 0,
+    createdBy: String(r.created_by || ""),
+    comment: String(r.comment || ""),
+    createdAt: String(r.created_at || r.timestamp || "")
+  }));
+
+  return {
+    id: createdAt,
+    title: String(row.title || ""),
+    url: String(row.url || ""),
+    type: String(row.type || ""),
+    author: String(row.name || ""),
+    reason: String(row.reason || ""),
+    notes: String(row.notes || ""),
+    sourceFileName: nonUrlNames,
+    sourceFileUrl: "",
+    sourceFileUrls: fileUrls,
+    categories: String(row.system_categories || "").split(/\s*\/\s*/).filter(Boolean),
+    tags: String(row.tags || "").split(/\s*\/\s*/).filter(Boolean),
+    ratings,
+    extracted: String(row.extracted || "").toLowerCase() === "yes",
+    createdAt,
+    updatedAt
+  };
+}
+
+let isRefreshing = false;
+async function refreshFromSheet({ silent = false } = {}) {
+  if (!isGoogleSheetSyncEnabled() || isRefreshing) return;
+  isRefreshing = true;
+  const refreshBtn = el("refreshBtn");
+  if (refreshBtn) refreshBtn.disabled = true;
+  try {
+    const { items: rows, skipped } = await fetchItemsFromSheet();
+    if (skipped) return;
+    items = rows
+      .map(rowToItem)
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    saveItems(items);
+    renderAll();
+    if (!silent) toast(`已從雲端同步 ${items.length} 筆內容。`);
+  } catch (err) {
+    console.error("refresh from sheet failed", err);
+    if (!silent) toast("從雲端讀取失敗：" + (err.message || "未知錯誤"));
+  } finally {
+    isRefreshing = false;
+    if (refreshBtn) refreshBtn.disabled = false;
+  }
 }
 
 function isTextFile(file) {
@@ -431,6 +506,8 @@ function bindEvents() {
   });
 
   el("adminToggle").addEventListener("click", handleAdminToggle);
+  const refreshBtn = el("refreshBtn");
+  if (refreshBtn) refreshBtn.addEventListener("click", () => refreshFromSheet());
   el("seedBtn").addEventListener("click", seedDemo);
   el("exportBtn").addEventListener("click", () => exportJson(items));
   el("csvBtn").addEventListener("click", () => exportCsv(items, averageScore, itemStatus));
@@ -473,3 +550,4 @@ bindEvents();
 applyAdminState();
 renderAll();
 console.info(syncLabel());
+refreshFromSheet({ silent: true });

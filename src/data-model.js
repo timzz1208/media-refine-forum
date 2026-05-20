@@ -22,8 +22,9 @@ export function makeId() {
 }
 
 export function createItem(input) {
+  const createdAt = input.createdAt || new Date().toISOString();
   return {
-    id: makeId(),
+    id: input.id || createdAt,
     title: input.title,
     url: input.url || "",
     type: input.type,
@@ -37,7 +38,7 @@ export function createItem(input) {
     tags: input.tags || [],
     ratings: input.ratings || [],
     extracted: Boolean(input.extracted),
-    createdAt: input.createdAt || new Date().toISOString(),
+    createdAt,
     updatedAt: new Date().toISOString()
   };
 }

@@ -46,6 +46,10 @@ function doGet(e) {
   const params = e.parameter || {};
   const action = params.action || 'save_item';
 
+  if (action === 'list_items') {
+    return json_(listItems_());
+  }
+
   if (action === 'save_rating') {
     appendRow_(RATING_SHEET_NAME, RATING_HEADERS, params);
     return text_('rating saved');
@@ -64,10 +68,70 @@ function doPost(e) {
       return json_(uploadFile_(body));
     }
 
+    if (action === 'list_items') {
+      return json_(listItems_());
+    }
+
     return json_({ ok: false, error: 'unknown action: ' + action });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
   }
+}
+
+function listItems_() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const itemSheet = ss.getSheetByName(ITEM_SHEET_NAME);
+    const ratingSheet = ss.getSheetByName(RATING_SHEET_NAME);
+
+    const items = sheetToObjects_(itemSheet);
+    const ratings = ratingSheet ? sheetToObjects_(ratingSheet) : [];
+
+    const ratingMap = {};
+    ratings.forEach(function (r) {
+      const key = String(r.item_id || '');
+      if (!key) return;
+      if (!ratingMap[key]) ratingMap[key] = [];
+      ratingMap[key].push(r);
+    });
+
+    const withRatings = items.map(function (item) {
+      const key = String(item.created_at || '');
+      const merged = {};
+      Object.keys(item).forEach(function (k) { merged[k] = item[k]; });
+      merged.ratings = ratingMap[key] || [];
+      return merged;
+    });
+
+    return { ok: true, items: withRatings };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  }
+}
+
+function sheetToObjects_(sheet) {
+  if (!sheet) return [];
+  const range = sheet.getDataRange();
+  const values = range.getValues();
+  if (values.length < 2) return [];
+  const headers = values[0].map(function (h) { return String(h); });
+  const out = [];
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    let hasContent = false;
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] !== '' && row[j] !== null && row[j] !== undefined) { hasContent = true; break; }
+    }
+    if (!hasContent) continue;
+    const obj = {};
+    for (let j = 0; j < headers.length; j++) {
+      let val = row[j];
+      if (val instanceof Date) val = val.toISOString();
+      obj[headers[j]] = val;
+    }
+    out.push(obj);
+  }
+  return out;
 }
 
 function uploadFile_(body) {
@@ -127,4 +191,11 @@ function text_(message) {
 
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function authorizeDrive() {
+  const folder = DriveApp.getFolderById(UPLOAD_FOLDER_ID);
+  const blob = Utilities.newBlob('test ' + new Date(), 'text/plain', 'auth-test.txt');
+  const file = folder.createFile(blob);
+  Logger.log('OK，測試檔已建立：' + file.getUrl());
 }
