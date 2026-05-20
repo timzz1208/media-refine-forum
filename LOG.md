@@ -1,5 +1,89 @@
 # 自媒體精修論壇 LOG
 
+## 2026-05-21
+
+### 今日完成
+
+- 比較五個視覺風格方案，建立獨立預覽檔（不污染正式網站）：
+  - `preview/A-quality.html`：質感升級（青藍工具感）
+  - `preview/B-magazine.html`：雜誌編輯感（明體 + 卡其）
+  - `preview/C-saas.html`：現代 SaaS（淺色側欄 + 紫）
+  - `preview/D-creator-club.html`：創作者俱樂部（珊瑚 + 桃粉，**選定**）
+  - `preview/E-studio-dark.html`：創作者深色工作室（暖黑 + 琥珀）
+- D 方案套用 10 項互動細節:
+  1. 卡片便利貼歪頭（hover 微旋）
+  2. score 分數呼吸光暈
+  3. stat 數字從 0 平滑跳動
+  4. 輸入框 placeholder 每 4 秒輪播
+  5. 標題下手繪波浪 SVG 底線
+  6. 空狀態加人味文案（🌱 ☕ ✏️）
+  7. 「本週最熱」漸層 banner
+  8. 投稿送出後彩屑爆炸 + 慶祝 toast
+  9. 頭像按名字 hash 配色（同名永遠同色）
+  10. 側欄「最近活躍」4 人區塊
+- 套用到正式網站:
+  - 完整重寫 `assets/styles.css`（涵蓋全部 5 個分頁）
+  - 更新 `index.html`：加入 Google Fonts、hot banner、squiggle SVG、最近活躍、confetti host
+  - 更新 `src/app.js`：新增 avatar hash、count-up、placeholder 輪播、confetti、hot banner 與最近活躍渲染
+  - **JS 核心功能完全保留**：投稿、評分、Google Sheet 同步、admin 模式、JSON/CSV 匯出、檔案上傳
+- 建立 `IDEAS.md` 點子收件匣
+- 把「貢獻者排行榜系統」完整構想存進 IDEAS.md（三個榜算法、獎勵機制、顯示位置、MVP 三步走、5 個待決策問題）
+- commit `d403085` push 到 main
+- GitHub Pages 自動重建完成，新版上線
+
+### 今日判斷
+
+- 原本的青藍工具感不適合「同學會」氛圍，應該走「創作者社群感」——溫暖、有頭像、有活動感
+- 新點子優先進 `IDEAS.md`，不污染正在進行的工作；動工前再從 IDEAS 挑出來決策
+- 本機預覽 ES modules 必須用 http server（`python -m http.server 8000`），file:// 協議會被 CORS 擋
+- 部署方式確認是 **GitHub Pages**（`has_pages: true`，無 GitHub Actions、無 Netlify 設定檔），auto-build on push to main
+- 排行榜系統不該直接動工，應該先決定演算法、獎勵、顯示位置、時間維度等設計問題
+- 視覺方案要實機預覽才能判斷，文字描述難以決定——五個 preview 檔留著當未來改版參考
+- 升級視覺時要小心保留所有既有 JS 功能（admin、Sheet 同步、檔案上傳），不能因為換 CSS 就破壞行為
+
+### 已知限制
+
+- 排行榜系統尚未實作（五個演算法／顯示問題未決策）
+- 投稿者名字未正規化，「彥廷／Yan-Ting／彥廷 Tim」會被視為不同人，影響未來排行榜
+- 沒有 favicon，瀏覽器分頁顯示空白圖示
+- 沒有 OG meta，分享到 LINE / Threads 抓不到預覽圖與描述
+- `hot-banner` 跟「最近活躍」側欄需要有資料才會顯示（沒投稿時自動隱藏）
+- 手機版（< 980px）會自動關閉「最近活躍」區塊節省畫面
+
+### 測試紀錄
+
+- 本機 `http://localhost:8000/` 測試:
+  - 五個分頁切換通過
+  - stat 數字從 0 跳到目前值通過
+  - 卡片 hover 歪頭通過
+  - 投稿表單送出觸發彩屑 + 慶祝 toast 通過
+  - 頭像按名字 hash 配色通過
+- 線上 `https://timzz1208.github.io/media-refine-forum/` 部署驗證:
+  - `index.html` 包含「👋 同學會原型」、`Plus+Jakarta`、`hot-banner`、`recent-active`
+  - `assets/styles.css` 包含 `--coral`、`scorePulse`
+  - GitHub Pages 自動重建成功
+
+### 下一步建議
+
+1. 給同學會實際試用，收集反饋
+2. 若決定做排行榜，先回 IDEAS.md 把 5 個問題決策完，再進實作:
+   - 投稿榜算法（推薦：總得分 = 張數 × 平均分）
+   - 評分榜算法（推薦：評分次數 + 短評平均字數）
+   - 顯示位置（推薦：新分頁 + 側欄 Top 3 雙軌）
+   - 時間維度（推薦：本週 + 全時段兩個 tab）
+   - 獎勵層次（推薦：先做徽章 + 解鎖功能）
+3. 補 favicon 與 OG meta（分享到社群有預覽圖）
+4. 投稿者欄位改下拉選單，避免名字漂移影響統計
+5. `WORKLOG.md`（誤建）已刪除，未來工作紀錄一律寫在 `LOG.md`
+
+### 待決策
+
+- 排行榜系統的 5 個問題（算法、顯示、時間、獎勵）
+- 投稿者欄位要不要鎖死選單
+- 同學會試用後，視覺要不要再微調
+
+---
+
 ## 2026-05-20
 
 ### 今日完成
