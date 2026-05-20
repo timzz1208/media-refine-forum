@@ -550,6 +550,16 @@ docs/google-apps-script-setup-guide.md
 - 明天展示可以接受。
 - 正式公開前至少要加 token、欄位長度限制與審核機制。
 
+## Claude Code 交接
+
+如果後續交給 Claude Code 或其他工程助手接手，請先看：
+
+```text
+CLAUDE_CODE_HANDOFF.md
+```
+
+這份文件整理了目前狀態、網址、後台、GitHub Pages、Apps Script、Google Sheet、已知風險與下一步。
+
 重點是：
 
 - 明天先展示流程，不要當正式收件系統。

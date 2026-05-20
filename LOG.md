@@ -21,6 +21,7 @@
 - 完成明天展示流程自動化測試：
   - 手機尺寸 390x844：投稿、內容池、評分、精修、正式收件頁通過。
   - 桌面尺寸 1440x900：示範資料、內容池、精修輸出通過。
+- 建立 Claude Code 交接文件：`CLAUDE_CODE_HANDOFF.md`。
 - 已建立正式收件 Google Sheet：`https://docs.google.com/spreadsheets/d/1lqQoJonAZTC7gCk8SkMJ7nbh9NOyKnuE2SbfKJoaYj4/edit`
 - 已將 Google Sheet 分頁改名為 `投稿資料`，寫入表頭，並凍結第一列。
 - 在 `README.md` 補上白話版模組說明，讓沒有編程經驗的人也能理解每個檔案負責什麼。
