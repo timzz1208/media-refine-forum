@@ -1,5 +1,8 @@
 const SPREADSHEET_ID = '1lqQoJonAZTC7gCk8SkMJ7nbh9NOyKnuE2SbfKJoaYj4';
 
+const ITEM_SHEET_NAME = '\u6295\u7a3f\u8cc7\u6599'; // 投稿資料
+const RATING_SHEET_NAME = '\u8a55\u5206\u7d00\u9304'; // 評分紀錄
+
 const ITEM_HEADERS = [
   'timestamp',
   'name',
@@ -41,11 +44,11 @@ function doGet(e) {
   const action = params.action || 'save_item';
 
   if (action === 'save_rating') {
-    appendRow_('評分紀錄', RATING_HEADERS, params);
+    appendRow_(RATING_SHEET_NAME, RATING_HEADERS, params);
     return text_('rating saved');
   }
 
-  appendRow_('投稿資料', ITEM_HEADERS, params);
+  appendRow_(ITEM_SHEET_NAME, ITEM_HEADERS, params);
   return text_('item saved');
 }
 
