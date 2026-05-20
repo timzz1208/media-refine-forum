@@ -32,6 +32,7 @@ export function createItem(input) {
     notes: input.notes || "",
     sourceFileName: input.sourceFileName || "",
     sourceFileUrl: input.sourceFileUrl || "",
+    sourceFileUrls: input.sourceFileUrls || [],
     categories: input.categories || [],
     tags: input.tags || [],
     ratings: input.ratings || [],

@@ -1,7 +1,10 @@
 const SPREADSHEET_ID = '1lqQoJonAZTC7gCk8SkMJ7nbh9NOyKnuE2SbfKJoaYj4';
+const UPLOAD_FOLDER_ID = '1jLhNxm-kQYI-xE0Nh7CtawhJUGzPEMLP';
 
-const ITEM_SHEET_NAME = '\u6295\u7a3f\u8cc7\u6599'; // 投稿資料
-const RATING_SHEET_NAME = '\u8a55\u5206\u7d00\u9304'; // 評分紀錄
+const ITEM_SHEET_NAME = '投稿資料'; // 投稿資料
+const RATING_SHEET_NAME = '評分紀錄'; // 評分紀錄
+
+const MAX_UPLOAD_BYTES = 12 * 1024 * 1024; // 12MB
 
 const ITEM_HEADERS = [
   'timestamp',
@@ -52,6 +55,47 @@ function doGet(e) {
   return text_('item saved');
 }
 
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const action = body.action || '';
+
+    if (action === 'upload_file') {
+      return json_(uploadFile_(body));
+    }
+
+    return json_({ ok: false, error: 'unknown action: ' + action });
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function uploadFile_(body) {
+  const data = body.data || '';
+  const filename = (body.filename || ('upload-' + Date.now())).replace(/[\\/:*?"<>|]/g, '_');
+  const mimeType = body.mimeType || 'application/octet-stream';
+
+  if (!data) {
+    return { ok: false, error: 'missing data' };
+  }
+
+  const bytes = Utilities.base64Decode(data);
+  if (bytes.length > MAX_UPLOAD_BYTES) {
+    return { ok: false, error: 'file too large: ' + bytes.length + ' bytes' };
+  }
+
+  const folder = DriveApp.getFolderById(UPLOAD_FOLDER_ID);
+  const blob = Utilities.newBlob(bytes, mimeType, filename);
+  const file = folder.createFile(blob);
+
+  return {
+    ok: true,
+    id: file.getId(),
+    name: file.getName(),
+    url: file.getUrl()
+  };
+}
+
 function appendRow_(sheetName, headers, params) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = getOrCreateSheet_(ss, sheetName, headers);
@@ -79,4 +123,8 @@ function getOrCreateSheet_(ss, sheetName, headers) {
 
 function text_(message) {
   return ContentService.createTextOutput(message).setMimeType(ContentService.MimeType.TEXT);
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }

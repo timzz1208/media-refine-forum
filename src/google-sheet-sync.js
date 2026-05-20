@@ -5,6 +5,43 @@ export function isGoogleSheetSyncEnabled() {
   return Boolean(GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL.includes("script.google.com"));
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      resolve(dataUrl.split(",")[1] || "");
+    };
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadFileToDrive(file) {
+  if (!isGoogleSheetSyncEnabled()) {
+    throw new Error("Google Sheet 同步未設定");
+  }
+  const data = await fileToBase64(file);
+  const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "upload_file",
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      data
+    })
+  });
+  if (!response.ok) {
+    throw new Error("HTTP " + response.status);
+  }
+  const result = await response.json();
+  if (!result.ok) {
+    throw new Error(result.error || "upload failed");
+  }
+  return { url: result.url, id: result.id, name: result.name };
+}
+
 export async function syncItemToGoogleSheet(item) {
   if (!isGoogleSheetSyncEnabled()) return { skipped: true };
 
@@ -19,7 +56,7 @@ export async function syncItemToGoogleSheet(item) {
     notes: item.notes || "",
     suggested_categories: "",
     allow_demo: "",
-    file_urls: item.sourceFileUrl || item.sourceFileName || "",
+    file_urls: (item.sourceFileUrls && item.sourceFileUrls.length ? item.sourceFileUrls.join(", ") : (item.sourceFileUrl || item.sourceFileName || "")),
     system_categories: (item.categories || []).join(" / "),
     tags: (item.tags || []).join(" / "),
     average_score: averageScore(item).toFixed(2),

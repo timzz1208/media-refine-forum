@@ -1,7 +1,7 @@
 import { categoryRules, classify, inferTags } from "./classifier.js";
 import { createItem, schemaFields } from "./data-model.js";
 import { buildExtraction } from "./refine.js";
-import { isGoogleSheetSyncEnabled, syncItemToGoogleSheet, syncRatingToGoogleSheet } from "./google-sheet-sync.js";
+import { isGoogleSheetSyncEnabled, syncItemToGoogleSheet, syncRatingToGoogleSheet, uploadFileToDrive } from "./google-sheet-sync.js";
 import { averageScore, itemStatus, toFixedScore } from "./rating.js";
 import { clearItems, downloadText, exportCsv, exportJson, loadItems, readJsonFile, saveItems } from "./storage.js";
 
@@ -124,7 +124,8 @@ function cardHtml(item) {
             <span>投稿者：${escapeHtml(item.author)}</span>
             <span>${new Date(item.createdAt).toLocaleDateString("zh-TW")}</span>
             ${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">開啟來源</a>` : ""}
-            ${item.sourceFileName ? `<span>檔案：${escapeHtml(item.sourceFileName)}</span>` : ""}
+            ${(item.sourceFileUrls || []).map((u, i) => `<a href="${escapeHtml(u)}" target="_blank" rel="noreferrer">附件 ${i + 1}</a>`).join("")}
+            ${(!item.sourceFileUrls || !item.sourceFileUrls.length) && item.sourceFileName ? `<span>檔案：${escapeHtml(item.sourceFileName)}</span>` : ""}
           </div>
         </div>
         <div class="score">${score ? toFixedScore(score) : "--"}</div>
@@ -219,9 +220,14 @@ function setView(view) {
   renderAll();
 }
 
+function isTextFile(file) {
+  if (!file) return false;
+  return file.type.startsWith("text/") || /\.(txt|md)$/i.test(file.name);
+}
+
 function readTextFile(file) {
   return new Promise(resolve => {
-    if (!file || (!file.type.startsWith("text/") && !file.name.match(/\.(txt|md)$/i))) {
+    if (!isTextFile(file)) {
       resolve("");
       return;
     }
@@ -230,6 +236,34 @@ function readTextFile(file) {
     reader.onerror = () => resolve("");
     reader.readAsText(file);
   });
+}
+
+async function processSubmitFiles(files) {
+  const textParts = [];
+  const fileNames = [];
+  const fileUrls = [];
+  const uploadErrors = [];
+
+  for (const file of files) {
+    fileNames.push(file.name);
+    if (isTextFile(file)) {
+      const text = await readTextFile(file);
+      if (text) textParts.push(text);
+      continue;
+    }
+    if (!isGoogleSheetSyncEnabled()) {
+      continue;
+    }
+    try {
+      const result = await uploadFileToDrive(file);
+      if (result && result.url) fileUrls.push(result.url);
+    } catch (err) {
+      uploadErrors.push(file.name);
+      console.error("upload failed", file.name, err);
+    }
+  }
+
+  return { textParts, fileNames, fileUrls, uploadErrors };
 }
 
 async function copyText(text) {
@@ -292,16 +326,21 @@ function bindEvents() {
 
   el("submitForm").addEventListener("submit", async event => {
     event.preventDefault();
-    const file = el("fileInput").files[0];
-    const fileText = await readTextFile(file);
+    const files = Array.from(el("fileInput").files || []);
+    if (files.length) toast(`處理 ${files.length} 個檔案中…`);
+    const { textParts, fileNames, fileUrls, uploadErrors } = await processSubmitFiles(files);
+    if (uploadErrors.length) {
+      toast(`下列檔案上傳失敗：${uploadErrors.join("、")}`);
+    }
     const base = {
       title: el("titleInput").value.trim(),
       url: el("urlInput").value.trim(),
       type: el("typeInput").value,
       author: el("authorInput").value.trim(),
       reason: el("reasonInput").value.trim(),
-      notes: [el("notesInput").value.trim(), fileText].filter(Boolean).join("\n\n"),
-      sourceFileName: file ? file.name : ""
+      notes: [el("notesInput").value.trim(), ...textParts].filter(Boolean).join("\n\n"),
+      sourceFileName: fileNames.join(", "),
+      sourceFileUrls: fileUrls
     };
     const categories = classify(`${base.title} ${base.reason} ${base.notes}`);
     const item = createItem({ ...base, categories, tags: inferTags(base) });
@@ -311,7 +350,7 @@ function bindEvents() {
       if (!result.skipped) toast("內容卡已同步到 Google Sheet。");
     }).catch(() => toast("本機已保存，但 Google Sheet 同步失敗。"));
     event.target.reset();
-    toast(`內容卡已建立，並完成初步分類。${isGoogleSheetSyncEnabled() ? "正在同步。" : ""}`);
+    toast(`內容卡已建立${fileUrls.length ? `，並上傳 ${fileUrls.length} 個檔案到 Drive` : ""}。`);
     setView("pool");
   });
 
