@@ -19,13 +19,18 @@
         <button class="nav-btn active" data-view="submit">投稿</button>
         <button class="nav-btn" data-view="pool">內容池</button>
         <button class="nav-btn" data-view="rate">評分</button>
-        <button class="nav-btn" data-view="refine">精修</button>
-        <button class="nav-btn" data-view="handoff">正式收件</button>
+        <button class="nav-btn" data-view="refine" data-admin-only>精修</button>
+        <button class="nav-btn" data-view="handoff" data-admin-only>正式收件</button>
       </nav>
 
       <div class="side-note">
         目前是展示原型。資料先存在本機瀏覽器，正式收件請先用 Google Form + Google Sheets。
       </div>
+
+      <button class="admin-toggle" id="adminToggle" type="button">
+        <span class="admin-dot" aria-hidden="true"></span>
+        <span id="adminToggleLabel">管理者登入</span>
+      </button>
     </aside>
 
     <main class="main">
@@ -34,7 +39,7 @@
           <h2 id="viewTitle">投稿</h2>
           <p id="viewIntro">貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。</p>
         </div>
-        <div class="top-actions">
+        <div class="top-actions" data-admin-only>
           <button class="btn secondary" id="seedBtn">載入示範資料</button>
           <button class="btn secondary" id="exportBtn">匯出 JSON</button>
           <button class="btn secondary" id="importBtn">匯入 JSON</button>

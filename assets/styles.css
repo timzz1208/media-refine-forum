@@ -44,6 +44,22 @@ a {
   display: none;
 }
 
+[data-admin-only] {
+  display: none !important;
+}
+
+body[data-admin="true"] [data-admin-only] {
+  display: revert !important;
+}
+
+body[data-admin="true"] [data-admin-only].top-actions {
+  display: flex !important;
+}
+
+body[data-admin="true"] [data-admin-only].nav-btn {
+  display: block !important;
+}
+
 .app-shell {
   min-height: 100vh;
   display: grid;
@@ -120,6 +136,44 @@ a {
   color: #d9e3e7;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.admin-toggle {
+  margin-top: 16px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .04);
+  color: #b7c4cb;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  transition: background .15s ease, color .15s ease;
+}
+
+.admin-toggle:hover {
+  background: rgba(255, 255, 255, .1);
+  color: #f7fafb;
+}
+
+.admin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #65717a;
+  flex: 0 0 8px;
+}
+
+body[data-admin="true"] .admin-dot {
+  background: #f6c453;
+  box-shadow: 0 0 0 3px rgba(246, 196, 83, .2);
+}
+
+body[data-admin="true"] .admin-toggle {
+  color: #f6c453;
+  border-color: rgba(246, 196, 83, .35);
 }
 
 .main {

@@ -10,6 +10,45 @@ let selectedRefineId = null;
 
 const el = id => document.getElementById(id);
 
+const ADMIN_PASSWORD = "polo114477";
+const ADMIN_STORAGE_KEY = "mrf.admin";
+
+function isAdmin() {
+  try {
+    return localStorage.getItem(ADMIN_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function applyAdminState() {
+  const on = isAdmin();
+  document.body.dataset.admin = on ? "true" : "false";
+  const label = el("adminToggleLabel");
+  if (label) label.textContent = on ? "管理者模式 · 登出" : "管理者登入";
+  if (!on && document.querySelector(".nav-btn.active[data-admin-only]")) {
+    setView("submit");
+  }
+}
+
+function handleAdminToggle() {
+  if (isAdmin()) {
+    localStorage.removeItem(ADMIN_STORAGE_KEY);
+    applyAdminState();
+    toast("已登出管理者模式。");
+    return;
+  }
+  const input = prompt("請輸入管理者密碼");
+  if (input === null) return;
+  if (input === ADMIN_PASSWORD) {
+    localStorage.setItem(ADMIN_STORAGE_KEY, "1");
+    applyAdminState();
+    toast("已進入管理者模式。");
+  } else {
+    toast("密碼錯誤。");
+  }
+}
+
 const viewCopy = {
   submit: ["投稿", "貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。"],
   pool: ["內容池", "查看所有投稿，依分類、狀態、分數篩選，找出值得精修的內容。"],
@@ -345,6 +384,7 @@ function bindEvents() {
     toast("已標記為已萃取，可移入 DEMO CLAUDE。");
   });
 
+  el("adminToggle").addEventListener("click", handleAdminToggle);
   el("seedBtn").addEventListener("click", seedDemo);
   el("exportBtn").addEventListener("click", () => exportJson(items));
   el("csvBtn").addEventListener("click", () => exportCsv(items, averageScore, itemStatus));
@@ -367,6 +407,10 @@ function bindEvents() {
   });
 
   el("clearBtn").addEventListener("click", () => {
+    if (!isAdmin()) {
+      toast("僅管理者可清空本機資料。");
+      return;
+    }
     if (!confirm("確定要清空本機資料？")) return;
     items = [];
     selectedRefineId = null;
@@ -380,5 +424,6 @@ function bindEvents() {
 renderFilters();
 renderSchema();
 bindEvents();
+applyAdminState();
 renderAll();
 console.info(syncLabel());
