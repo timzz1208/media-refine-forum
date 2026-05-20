@@ -359,8 +359,14 @@ textarea {
 
 .rating-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 10px;
+}
+
+.rating-box input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .rating-box {
