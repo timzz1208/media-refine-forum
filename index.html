@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自媒體精修論壇</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">精</div>
+        <h1>自媒體精修論壇</h1>
+        <p>把同學會成員看到的好內容，煉成可複製的方法、腳本與簡報素材。</p>
+      </div>
+
+      <nav class="nav" aria-label="主要頁面">
+        <button class="nav-btn active" data-view="submit">投稿</button>
+        <button class="nav-btn" data-view="pool">內容池</button>
+        <button class="nav-btn" data-view="rate">評分</button>
+        <button class="nav-btn" data-view="refine">精修</button>
+        <button class="nav-btn" data-view="handoff">正式收件</button>
+      </nav>
+
+      <div class="side-note">
+        目前是展示原型。資料先存在本機瀏覽器，正式收件請先用 Google Form + Google Sheets。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="viewTitle">投稿</h2>
+          <p id="viewIntro">貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn secondary" id="seedBtn">載入示範資料</button>
+          <button class="btn secondary" id="exportBtn">匯出 JSON</button>
+          <button class="btn secondary" id="importBtn">匯入 JSON</button>
+          <button class="btn secondary" id="csvBtn">匯出表格 CSV</button>
+          <button class="btn danger" id="clearBtn">清空本機</button>
+          <input class="hidden" id="importFile" type="file" accept=".json,application/json">
+        </div>
+      </header>
+
+      <section class="stats" aria-label="資料統計">
+        <div class="stat"><strong id="statTotal">0</strong><span>投稿內容</span></div>
+        <div class="stat"><strong id="statRated">0</strong><span>已評分</span></div>
+        <div class="stat"><strong id="statHot">0</strong><span>高分精修池</span></div>
+        <div class="stat"><strong id="statExtracted">0</strong><span>已萃取</span></div>
+      </section>
+
+      <section class="section active" id="submit">
+        <div class="grid-two">
+          <form class="panel form-grid" id="submitForm">
+            <label>內容標題
+              <input id="titleInput" required placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解">
+            </label>
+            <label>內容連結（可空白）
+              <input id="urlInput" type="url" placeholder="https://...">
+            </label>
+            <label>上傳檔案（可選）
+              <input id="fileInput" type="file" accept=".txt,.md,.pdf,image/*">
+            </label>
+            <label>內容類型
+              <select id="typeInput">
+                <option>影片連結</option>
+                <option>文章連結</option>
+                <option>逐字稿</option>
+                <option>截圖摘要</option>
+                <option>手動筆記</option>
+              </select>
+            </label>
+            <label>投稿者
+              <input id="authorInput" required placeholder="例：彥廷">
+            </label>
+            <label>我覺得它有料的原因
+              <textarea id="reasonInput" required placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
+            </label>
+            <label>補充摘要或逐字稿
+              <textarea id="notesInput" placeholder="可貼重點段落、逐字稿、你自己的觀察。"></textarea>
+            </label>
+            <div class="actions">
+              <button class="btn" type="submit">建立內容卡</button>
+              <button class="btn secondary" type="reset">清空表單</button>
+            </div>
+          </form>
+
+          <div class="panel">
+            <h3>分類規則</h3>
+            <p class="summary">第一版用關鍵字模擬 AI 分類。未來只要替換分類助手，就能接 AI API，不用重寫整個網頁。</p>
+            <div class="tags" id="categoryLegend"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="pool">
+        <div class="panel">
+          <div class="filters">
+            <input id="searchInput" placeholder="搜尋標題、原因、摘要、標籤">
+            <select id="categoryFilter"></select>
+            <select id="statusFilter"></select>
+            <select id="scoreFilter">
+              <option value="all">全部分數</option>
+              <option value="hot">4 分以上</option>
+              <option value="rated">已評分</option>
+              <option value="unrated">未評分</option>
+            </select>
+          </div>
+        </div>
+        <div class="content-list" id="poolList"></div>
+      </section>
+
+      <section class="section" id="rate">
+        <div class="grid-two">
+          <div class="panel">
+            <label>選擇要評分的內容
+              <select id="rateSelect"></select>
+            </label>
+            <form class="form-grid spacing-top" id="ratingForm">
+              <div class="rating-grid">
+                <label class="rating-box"><span>實用度</span><input type="number" min="1" max="5" value="4" id="scoreUseful"></label>
+                <label class="rating-box"><span>可模仿度</span><input type="number" min="1" max="5" value="4" id="scoreCopy"></label>
+                <label class="rating-box"><span>啟發度</span><input type="number" min="1" max="5" value="4" id="scoreInsight"></label>
+                <label class="rating-box"><span>轉化潛力</span><input type="number" min="1" max="5" value="4" id="scoreConvert"></label>
+                <label class="rating-box"><span>產業適配度</span><input type="number" min="1" max="5" value="4" id="scoreFit"></label>
+              </div>
+              <label>評分者
+                <input id="ratingBy" placeholder="例：彥廷 / 同學 A">
+              </label>
+              <label>短評
+                <textarea id="ratingComment" required placeholder="這個內容最值得被精修的地方是什麼？"></textarea>
+              </label>
+              <div class="actions">
+                <button class="btn" type="submit">送出評分</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel" id="ratePreview"></div>
+        </div>
+      </section>
+
+      <section class="section" id="refine">
+        <div class="extract-layout">
+          <div class="panel">
+            <h3>高分精修池</h3>
+            <p class="summary">平均 4 分以上的內容會出現在這裡。選一筆後即可生成精修稿。</p>
+            <div class="refine-list" id="refineList"></div>
+          </div>
+          <div class="panel">
+            <div class="actions refine-actions">
+              <button class="btn" id="extractBtn">萃取成方法庫</button>
+              <button class="btn secondary" id="copyBtn">複製結果</button>
+              <button class="btn secondary" id="downloadMdBtn">下載 MD</button>
+              <button class="btn secondary" id="markDoneBtn">標記已萃取</button>
+            </div>
+            <pre class="output" id="extractOutput">請先從左側選擇一筆高分內容。</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="handoff">
+        <div class="panel handoff">
+          <h3>正式收件路線</h3>
+          <p class="summary">明天如果要真的收到學員投稿，先用 Google Form 收件，Google Sheets 看資料；本頁原型負責展示未來產品長相。</p>
+          <div class="handoff-grid">
+            <article>
+              <strong>今天已完成</strong>
+              <p>本機原型、分類、評分、精修、JSON/CSV 匯出。</p>
+            </article>
+            <article>
+              <strong>明天最穩</strong>
+              <p>Google Form 收投稿，檔案上傳進 Google Drive，回覆集中到 Google Sheets。</p>
+            </article>
+            <article>
+              <strong>下一版串接</strong>
+              <p>把 storage.js 從 localStorage 換成 Google Sheets 或正式資料庫。</p>
+            </article>
+          </div>
+          <h4>Google Form 欄位</h4>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>欄位</th><th>用途</th></tr></thead>
+              <tbody id="schemaTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
