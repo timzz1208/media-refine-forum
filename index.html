@@ -65,27 +65,32 @@
             <label>內容連結（可空白）
               <input id="urlInput" type="url" placeholder="https://...">
             </label>
-            <label>上傳檔案（可選）
-              <input id="fileInput" type="file" accept=".txt,.md,.pdf,image/*">
-            </label>
-            <label>內容類型
-              <select id="typeInput">
-                <option>影片連結</option>
-                <option>文章連結</option>
-                <option>逐字稿</option>
-                <option>截圖摘要</option>
-                <option>手動筆記</option>
-              </select>
-            </label>
             <label>投稿者
               <input id="authorInput" required placeholder="例：彥廷">
             </label>
             <label>我覺得它有料的原因
               <textarea id="reasonInput" required placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
             </label>
-            <label>補充摘要或逐字稿
-              <textarea id="notesInput" placeholder="可貼重點段落、逐字稿、你自己的觀察。"></textarea>
-            </label>
+            <details class="more-options">
+              <summary>更多選項（檔案、類型、補充摘要）</summary>
+              <div class="more-options-body">
+                <label>內容類型
+                  <select id="typeInput">
+                    <option>影片連結</option>
+                    <option>文章連結</option>
+                    <option>逐字稿</option>
+                    <option>截圖摘要</option>
+                    <option>手動筆記</option>
+                  </select>
+                </label>
+                <label>上傳檔案（可選）
+                  <input id="fileInput" type="file" accept=".txt,.md,.pdf,image/*">
+                </label>
+                <label>補充摘要或逐字稿
+                  <textarea id="notesInput" placeholder="可貼重點段落、逐字稿、你自己的觀察。"></textarea>
+                </label>
+              </div>
+            </details>
             <div class="actions">
               <button class="btn" type="submit">建立內容卡</button>
               <button class="btn secondary" type="reset">清空表單</button>
@@ -105,8 +110,8 @@
           <div class="filters">
             <input id="searchInput" placeholder="搜尋標題、原因、摘要、標籤">
             <select id="categoryFilter"></select>
-            <select id="statusFilter"></select>
-            <select id="scoreFilter">
+            <select id="statusFilter" data-admin-only></select>
+            <select id="scoreFilter" data-admin-only>
               <option value="all">全部分數</option>
               <option value="hot">4 分以上</option>
               <option value="rated">已評分</option>
@@ -124,7 +129,14 @@
               <select id="rateSelect"></select>
             </label>
             <form class="form-grid spacing-top" id="ratingForm">
-              <div class="rating-grid">
+              <div class="rating-simple" data-student-only>
+                <label class="rating-box rating-box-wide">
+                  <span>總印象（1–5 分）</span>
+                  <input type="number" min="1" max="5" value="4" id="scoreSimple">
+                </label>
+                <p class="summary rating-hint">想看五個維度的細評？切換為管理者模式。</p>
+              </div>
+              <div class="rating-grid" data-admin-only>
                 <label class="rating-box"><span>實用度</span><input type="number" min="1" max="5" value="4" id="scoreUseful"></label>
                 <label class="rating-box"><span>可模仿度</span><input type="number" min="1" max="5" value="4" id="scoreCopy"></label>
                 <label class="rating-box"><span>啟發度</span><input type="number" min="1" max="5" value="4" id="scoreInsight"></label>

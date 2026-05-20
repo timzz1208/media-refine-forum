@@ -322,16 +322,23 @@ function bindEvents() {
       toast("目前沒有可評分的內容。");
       return;
     }
-    const rating = {
-      useful: Number(el("scoreUseful").value),
-      copy: Number(el("scoreCopy").value),
-      insight: Number(el("scoreInsight").value),
-      convert: Number(el("scoreConvert").value),
-      fit: Number(el("scoreFit").value),
+    const rating = isAdmin()
+      ? {
+          useful: Number(el("scoreUseful").value),
+          copy: Number(el("scoreCopy").value),
+          insight: Number(el("scoreInsight").value),
+          convert: Number(el("scoreConvert").value),
+          fit: Number(el("scoreFit").value)
+        }
+      : (() => {
+          const v = Number(el("scoreSimple").value);
+          return { useful: v, copy: v, insight: v, convert: v, fit: v };
+        })();
+    Object.assign(rating, {
       createdBy: el("ratingBy").value.trim() || "匿名",
       comment: el("ratingComment").value.trim(),
       createdAt: new Date().toISOString()
-    };
+    });
     item.ratings.push(rating);
     item.updatedAt = new Date().toISOString();
     saveItems(items);
