@@ -20,6 +20,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: #edf2f4;
+  overflow-x: hidden;
 }
 
 button,
@@ -47,6 +48,7 @@ a {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
+  min-width: 0;
 }
 
 .sidebar {
@@ -125,6 +127,7 @@ a {
   display: grid;
   gap: 22px;
   align-content: start;
+  min-width: 0;
 }
 
 .topbar {
@@ -189,11 +192,13 @@ a {
 
 .panel {
   padding: 20px;
+  min-width: 0;
 }
 
 .section {
   display: none;
   gap: 16px;
+  min-width: 0;
 }
 
 .section.active {
@@ -517,14 +522,54 @@ th {
 
 @media (max-width: 620px) {
   .main {
-    padding: 16px;
+    padding: 14px;
   }
 
   .sidebar {
-    padding: 18px 16px;
+    padding: 12px 12px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: 0 8px 22px rgba(23, 32, 38, .18);
   }
 
-  .nav,
+  .brand {
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand p,
+  .side-note {
+    display: none;
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+
+  .nav-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 8px 4px;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
   .stats,
   .filters,
   .rating-grid,
@@ -532,11 +577,43 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat {
+    padding: 12px;
+  }
+
+  .stat strong {
+    font-size: 22px;
+  }
+
+  .panel {
+    padding: 15px;
+  }
+
   .topbar h2 {
     font-size: 24px;
   }
 
-  .top-actions .btn,
+  .topbar p {
+    font-size: 14px;
+  }
+
+  .top-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .top-actions .btn {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 14px;
+  }
+
   .actions .btn {
     width: 100%;
   }
