@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 E：創作者深色工作室｜自媒體精修論壇 預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #14110f;
+  --bg-2: #1b1714;
+  --bg-3: #221d19;
+  --panel: #1f1a16;
+  --panel-2: #2a231e;
+  --ink: #f5ece0;
+  --ink-2: #d4c8b8;
+  --muted: #8a7d6e;
+  --line: #2e2620;
+  --line-strong: #3d342c;
+  --amber: #f59e0b;
+  --amber-bright: #fbbf24;
+  --amber-soft: rgba(245,158,11,.12);
+  --coral: #ff7849;
+  --teal: #14b8a6;
+  --rose: #f43f5e;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --shadow-amber: 0 8px 24px rgba(245,158,11,.28);
+  font-family: "Inter", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  background-image:
+    radial-gradient(900px 600px at 90% -10%, rgba(245,158,11,.10), transparent 55%),
+    radial-gradient(700px 600px at -10% 110%, rgba(255,120,73,.06), transparent 55%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -.005em;
+}
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 268px minmax(0,1fr); }
+
+/* SIDEBAR — 更深一階 */
+.sidebar {
+  background: var(--bg-2);
+  color: var(--ink);
+  padding: 26px 18px;
+  position: sticky; top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--line);
+}
+.brand { display: grid; gap: 10px; margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.brand-top { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--amber), var(--coral));
+  color: #14110f;
+  font-weight: 900; font-size: 17px;
+  box-shadow: var(--shadow-amber);
+}
+.brand h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; }
+.brand-sub {
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.brand p { margin: 6px 4px 0; color: var(--muted); font-size: 12.5px; line-height: 1.65; }
+
+.nav-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 12px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+}
+.nav { display: grid; gap: 3px; }
+.nav-btn {
+  width: 100%; text-align: left;
+  color: var(--ink-2); background: transparent;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: all .14s ease;
+  display: flex; align-items: center; gap: 10px;
+  font-family: inherit;
+}
+.nav-btn::before {
+  content: ""; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--line-strong);
+  transition: all .15s ease;
+}
+.nav-btn:hover { background: var(--bg-3); color: var(--ink); }
+.nav-btn:hover::before { background: var(--muted); }
+.nav-btn.active {
+  background: var(--amber-soft);
+  color: var(--amber-bright);
+  font-weight: 700;
+}
+.nav-btn.active::before { background: var(--amber); width: 6px; height: 6px; box-shadow: 0 0 8px var(--amber); }
+
+.side-card {
+  margin-top: 22px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-strong);
+  font-size: 12px; line-height: 1.65;
+  color: var(--ink-2);
+}
+.side-card strong { display: block; color: var(--amber); font-size: 12px; font-weight: 700; margin-bottom: 4px; letter-spacing: .05em; }
+
+.admin-toggle {
+  margin: 12px 0 0;
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+
+/* MAIN */
+.main { padding: 30px 36px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+.topbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: end; }
+.live-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: var(--amber);
+  letter-spacing: .15em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.live-dot::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 4px rgba(245,158,11,.18);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(245,158,11,.18); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,.05); } }
+.topbar h2 {
+  margin: 0;
+  font-size: 32px; line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.topbar p { margin: 10px 0 0; color: var(--ink-2); line-height: 1.65; max-width: 720px; font-size: 14.5px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn {
+  border: 0; cursor: pointer;
+  border-radius: 11px;
+  padding: 10px 18px;
+  background: var(--amber);
+  color: #14110f;
+  font-weight: 700; font-size: 13.5px;
+  box-shadow: var(--shadow-amber);
+  transition: all .14s ease;
+  font-family: inherit;
+}
+.btn:hover { background: var(--amber-bright); transform: translateY(-1px); box-shadow: 0 10px 28px rgba(245,158,11,.36); }
+.btn.secondary {
+  background: var(--bg-3);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+.btn.secondary:hover { background: var(--panel-2); border-color: var(--muted); transform: translateY(-1px); }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(130px,1fr)); gap: 12px; }
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all .14s ease;
+}
+.stat:hover { border-color: var(--line-strong); background: var(--panel-2); transform: translateY(-2px); }
+.stat::after {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.stat:hover::after { opacity: 1; }
+.stat strong { display: block; font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); }
+.stat span { display: block; color: var(--muted); margin-top: 8px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+
+.grid-two { display: grid; grid-template-columns: minmax(320px,420px) minmax(0,1fr); gap: 16px; align-items: start; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.form-grid { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; color: var(--ink); font-weight: 600; font-size: 13px; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 11px 13px;
+  color: var(--ink);
+  background: var(--bg-2);
+  font: inherit;
+  font-size: 14px;
+  transition: all .14s ease;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+input:focus, textarea:focus, select:focus {
+  outline: 0;
+  border-color: var(--amber);
+  background: var(--bg-3);
+  box-shadow: 0 0 0 3px var(--amber-soft);
+}
+textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.panel h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
+.summary { margin: 0; color: var(--ink-2); line-height: 1.7; font-size: 14px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 7px;
+  padding: 4px 10px;
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+}
+.pill.hot { background: var(--amber-soft); color: var(--amber-bright); border-color: rgba(245,158,11,.30); }
+.pill.ready { background: rgba(20,184,166,.10); color: var(--teal); border-color: rgba(20,184,166,.30); }
+.pill.rose { background: rgba(244,63,94,.10); color: var(--rose); border-color: rgba(244,63,94,.25); }
+
+.item-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  display: grid; gap: 12px;
+  transition: all .14s ease;
+}
+.item-card:hover { border-color: var(--line-strong); background: var(--panel-2); }
+.item-head { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 14px; align-items: start; }
+.avatar {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--coral), var(--amber));
+  color: #14110f;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 15px;
+}
+.item-title-block { min-width: 0; }
+.item-title { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.4; letter-spacing: -.01em; color: var(--ink); }
+.item-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12.5px; margin-top: 5px; }
+.score {
+  min-width: 64px; min-height: 56px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--amber-soft);
+  color: var(--amber-bright);
+  font-weight: 900; font-size: 24px;
+  letter-spacing: -.02em;
+  border: 1px solid rgba(245,158,11,.30);
+}
+
+.preview-tag {
+  position: fixed; right: 18px; top: 18px;
+  background: var(--bg-3);
+  color: var(--amber);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 99;
+  border: 1px solid var(--line-strong);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.preview-tag::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+</style>
+</head>
+<body>
+<div class="preview-tag">方案 E · 創作者工作室</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-top">
+        <div class="brand-mark">精</div>
+        <div>
+          <h1>自媒體精修論壇</h1>
+          <div class="brand-sub">Refinement Studio</div>
+        </div>
+      </div>
+      <p>把同學會看到的好內容，煉成可複製的方法。</p>
+    </div>
+    <div class="nav-label">Channels</div>
+    <nav class="nav">
+      <button class="nav-btn active">投稿</button>
+      <button class="nav-btn">內容池</button>
+      <button class="nav-btn">評分</button>
+      <button class="nav-btn">精修</button>
+      <button class="nav-btn">正式收件</button>
+    </nav>
+    <div class="side-card">
+      <strong>PROTOTYPE</strong>
+      資料先存在本機瀏覽器，正式收件用 Google Form + Sheets。
+    </div>
+    <button class="admin-toggle"><span class="admin-dot"></span><span>管理者登入</span></button>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="live-dot">SUBMISSION · 投稿</div>
+        <h2>投稿</h2>
+        <p>貼上影片或文章連結，補一句你覺得有料的原因，系統會用文字線索自動分類。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary">載入示範資料</button>
+        <button class="btn secondary">匯出 JSON</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong>24</strong><span>投稿內容</span></div>
+      <div class="stat"><strong>18</strong><span>已評分</span></div>
+      <div class="stat"><strong>7</strong><span>高分精修池</span></div>
+      <div class="stat"><strong>3</strong><span>已萃取</span></div>
+    </section>
+
+    <div class="grid-two">
+      <form class="panel form-grid">
+        <label>內容標題
+          <input placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解">
+        </label>
+        <label>內容連結（可空白）
+          <input type="url" placeholder="https://...">
+        </label>
+        <label>投稿者
+          <input placeholder="例：彥廷">
+        </label>
+        <label>我覺得它有料的原因
+          <textarea placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" type="button">建立內容卡</button>
+          <button class="btn secondary" type="button">清空表單</button>
+        </div>
+      </form>
+
+      <div class="panel">
+        <h3>分類規則</h3>
+        <p class="summary">第一版用關鍵字模擬 AI 分類。未來只要替換分類助手，就能接 AI API，不用重寫整個網頁。</p>
+        <div class="tags">
+          <span class="pill">短影音拆解</span>
+          <span class="pill">敘事框架</span>
+          <span class="pill rose">變現案例</span>
+          <span class="pill hot">高分推薦</span>
+          <span class="pill ready">已精修</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div class="avatar">彥</div>
+        <div class="item-title-block">
+          <h3 class="item-title">三秒 Hook 讓觀眾停下來的短影音拆解</h3>
+          <div class="item-meta">
+            <span>彥廷</span><span>·</span><span>影片連結</span><span>·</span><span>2026-05-21</span>
+          </div>
+        </div>
+        <div class="score">4.6</div>
+      </div>
+      <p class="summary">把開頭三秒拆成「衝突 → 反差 → 鉤子」三段，最適合保險業務員拍信任型短影音時模仿。</p>
+      <div class="tags">
+        <span class="pill">短影音拆解</span>
+        <span class="pill hot">高分推薦</span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -73,16 +73,182 @@ function toast(message) {
   setTimeout(() => node.classList.remove("show"), 2200);
 }
 
+// 頭像配色 hash —— 同名永遠同色
+const AVATAR_PALETTES = [
+  ["#ef6c4d", "#ffb088"],
+  ["#5ec79a", "#a7e6c4"],
+  ["#f5a623", "#ffd584"],
+  ["#8b5a8c", "#d4a3d5"],
+  ["#4a90c9", "#88c0e8"],
+  ["#e85a8c", "#ffa3c2"],
+  ["#7c9c5c", "#c2db9c"],
+  ["#d97757", "#f0a884"]
+];
+function hashName(name) {
+  if (!name) return AVATAR_PALETTES[0];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTES[h % AVATAR_PALETTES.length];
+}
+function paintAvatars(root = document) {
+  root.querySelectorAll("[data-name]").forEach(node => {
+    const [c1, c2] = hashName(node.dataset.name);
+    node.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+  });
+}
+function avatarLetter(name) {
+  const trimmed = String(name || "").trim();
+  return trimmed ? trimmed[0] : "?";
+}
+
+// stat 數字平滑跳動
+function animateNumber(node, target) {
+  const start = Number(node.textContent) || 0;
+  if (start === target) {
+    node.textContent = target;
+    return;
+  }
+  const duration = 700;
+  const t0 = performance.now();
+  function tick(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    node.textContent = Math.round(start + (target - start) * eased);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// 輸入框 placeholder 輪播（不打斷使用者打字）
+function setupPlaceholderRotation() {
+  document.querySelectorAll("[data-rotate-placeholder]").forEach(node => {
+    let list;
+    try { list = JSON.parse(node.dataset.rotatePlaceholder); } catch { return; }
+    if (!Array.isArray(list) || !list.length) return;
+    let i = 0;
+    node.placeholder = list[0];
+    setInterval(() => {
+      if (document.activeElement === node || node.value) return;
+      i = (i + 1) % list.length;
+      node.placeholder = list[i];
+    }, 4000);
+  });
+}
+
+// 送出後彩屑慶祝
+function fireConfetti() {
+  const host = el("confettiHost");
+  if (!host) return;
+  const colors = ["#ef6c4d", "#ffb088", "#5ec79a", "#f5a623", "#8b5a8c", "#e85a8c"];
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    const size = 6 + Math.random() * 8;
+    const startX = window.innerWidth / 2 + (Math.random() - 0.5) * 100;
+    const startY = window.innerHeight / 2;
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = 220 + Math.random() * 280;
+    const dx = Math.cos(angle) * velocity;
+    const dy = Math.sin(angle) * velocity - 200;
+    const rot = (Math.random() - 0.5) * 720;
+    const dur = 900 + Math.random() * 700;
+    piece.style.cssText = `
+      position: absolute;
+      left: ${startX}px; top: ${startY}px;
+      width: ${size}px; height: ${size * 1.4}px;
+      background: ${colors[i % colors.length]};
+      border-radius: 2px;
+      will-change: transform, opacity;
+      transition: transform ${dur}ms cubic-bezier(.2,.6,.4,1), opacity ${dur}ms ease-out;
+    `;
+    host.appendChild(piece);
+    requestAnimationFrame(() => {
+      piece.style.transform = `translate(${dx}px, ${dy + 600}px) rotate(${rot}deg)`;
+      piece.style.opacity = "0";
+    });
+    setTimeout(() => piece.remove(), dur + 100);
+  }
+}
+
 function persist() {
   saveItems(items);
   renderAll();
 }
 
 function renderStats() {
-  el("statTotal").textContent = items.length;
-  el("statRated").textContent = items.filter(item => item.ratings.length).length;
-  el("statHot").textContent = items.filter(item => averageScore(item) >= 4).length;
-  el("statExtracted").textContent = items.filter(item => item.extracted).length;
+  animateNumber(el("statTotal"), items.length);
+  animateNumber(el("statRated"), items.filter(item => item.ratings.length).length);
+  animateNumber(el("statHot"), items.filter(item => averageScore(item) >= 4).length);
+  animateNumber(el("statExtracted"), items.filter(item => item.extracted).length);
+}
+
+function renderHotBanner() {
+  const banner = el("hotBanner");
+  if (!banner) return;
+  const rated = items
+    .filter(item => item.ratings.length)
+    .map(item => ({ item, score: averageScore(item) }))
+    .sort((a, b) => b.score - a.score);
+  const top = rated[0];
+  if (!top || top.score < 4) {
+    banner.style.display = "none";
+    return;
+  }
+  banner.style.display = "grid";
+  el("hotBannerText").innerHTML =
+    `「${escapeHtml(top.item.title)}」拿到 <em>${toFixedScore(top.score)} 分</em> · 投稿者：${escapeHtml(top.item.author || "匿名")}`;
+}
+
+function renderRecentActive() {
+  const wrap = el("recentActive");
+  const list = el("recentList");
+  if (!wrap || !list) return;
+
+  const events = [];
+  for (const item of items) {
+    if (item.author) {
+      events.push({
+        name: item.author,
+        when: item.createdAt || item.updatedAt || "",
+        action: "投了 1 則"
+      });
+    }
+    for (const r of item.ratings || []) {
+      if (r.createdBy) {
+        events.push({
+          name: r.createdBy,
+          when: r.createdAt || "",
+          action: "評分 1 則"
+        });
+      }
+    }
+  }
+  events.sort((a, b) => (b.when || "").localeCompare(a.when || ""));
+
+  const seen = new Map();
+  for (const ev of events) {
+    if (seen.has(ev.name)) continue;
+    seen.set(ev.name, ev);
+    if (seen.size >= 4) break;
+  }
+
+  if (seen.size === 0) {
+    wrap.style.display = "none";
+    return;
+  }
+
+  wrap.style.display = "block";
+  list.innerHTML = [...seen.values()]
+    .map(ev => `
+      <div class="recent-item">
+        <div class="mini-avatar" data-name="${escapeHtml(ev.name)}">${escapeHtml(avatarLetter(ev.name))}</div>
+        <div class="recent-text">
+          <div class="recent-name">${escapeHtml(ev.name)}</div>
+          <div class="recent-action">${escapeHtml(ev.action)}</div>
+        </div>
+      </div>
+    `).join("");
+  paintAvatars(list);
 }
 
 function syncLabel() {
@@ -117,11 +283,12 @@ function cardHtml(item) {
   return `
     <article class="item-card">
       <div class="item-head">
-        <div>
+        <div class="avatar" data-name="${escapeHtml(item.author || "匿名")}">${escapeHtml(avatarLetter(item.author))}</div>
+        <div class="item-title-block">
           <h3 class="item-title">${escapeHtml(item.title)}</h3>
           <div class="item-meta">
             <span>${escapeHtml(item.type)}</span>
-            <span>投稿者：${escapeHtml(item.author)}</span>
+            <span>投稿者：${escapeHtml(item.author || "匿名")}</span>
             <span>${new Date(item.createdAt).toLocaleDateString("zh-TW")}</span>
             ${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">開啟來源</a>` : ""}
             ${(item.sourceFileUrls || []).map((u, i) => `<a href="${escapeHtml(u)}" target="_blank" rel="noreferrer">附件 ${i + 1}</a>`).join("")}
@@ -164,9 +331,11 @@ function filteredItems() {
 
 function renderPool() {
   const list = filteredItems();
-  el("poolList").innerHTML = list.length
+  const node = el("poolList");
+  node.innerHTML = list.length
     ? list.map(cardHtml).join("")
-    : `<div class="empty">目前沒有符合條件的內容。</div>`;
+    : `<div class="empty" data-icon="🌱">同學會剛開張，還沒有符合條件的內容～</div>`;
+  paintAvatars(node);
 }
 
 function renderRateSelect() {
@@ -178,7 +347,9 @@ function renderRateSelect() {
 
 function renderRatePreview() {
   const item = items.find(entry => entry.id === el("rateSelect").value);
-  el("ratePreview").innerHTML = item ? cardHtml(item) : `<div class="empty">請先建立內容卡。</div>`;
+  const node = el("ratePreview");
+  node.innerHTML = item ? cardHtml(item) : `<div class="empty" data-icon="✏️">請先建立內容卡，再回來評分。</div>`;
+  paintAvatars(node);
 }
 
 function renderRefineList() {
@@ -193,7 +364,7 @@ function renderRefineList() {
           <span>平均分 ${toFixedScore(averageScore(item))}｜${item.categories.map(escapeHtml).join("、")}</span>
         </button>
       `).join("")
-    : `<div class="empty">尚無 4 分以上內容。</div>`;
+    : `<div class="empty" data-icon="☕">還沒有 4 分以上的高分內容，先去評分區看看其他人的投稿吧～</div>`;
 
   document.querySelectorAll("[data-refine-id]").forEach(button => {
     button.addEventListener("click", () => {
@@ -210,6 +381,8 @@ function renderAll() {
   renderPool();
   renderRateSelect();
   renderRefineList();
+  renderHotBanner();
+  renderRecentActive();
 }
 
 let lastAutoRefresh = 0;
@@ -425,7 +598,8 @@ function bindEvents() {
       if (!result.skipped) toast("內容卡已同步到 Google Sheet。");
     }).catch(() => toast("本機已保存，但 Google Sheet 同步失敗。"));
     event.target.reset();
-    toast(`內容卡已建立${fileUrls.length ? `，並上傳 ${fileUrls.length} 個檔案到 Drive` : ""}。`);
+    fireConfetti();
+    toast(`🎉 投稿成功！${fileUrls.length ? `已上傳 ${fileUrls.length} 個檔案到 Drive。` : "你是同學會第 " + items.length + " 則投稿。"}`);
     setView("pool");
   });
 
@@ -508,6 +682,8 @@ function bindEvents() {
   el("adminToggle").addEventListener("click", handleAdminToggle);
   const refreshBtn = el("refreshBtn");
   if (refreshBtn) refreshBtn.addEventListener("click", () => refreshFromSheet());
+  const hotCta = el("hotBannerCta");
+  if (hotCta) hotCta.addEventListener("click", () => setView("pool"));
   el("seedBtn").addEventListener("click", seedDemo);
   el("exportBtn").addEventListener("click", () => exportJson(items));
   el("csvBtn").addEventListener("click", () => exportCsv(items, averageScore, itemStatus));
@@ -548,6 +724,7 @@ renderFilters();
 renderSchema();
 bindEvents();
 applyAdminState();
+setupPlaceholderRotation();
 renderAll();
 console.info(syncLabel());
 refreshFromSheet({ silent: true });

@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>自媒體精修論壇</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
@@ -24,7 +27,13 @@
       </nav>
 
       <div class="side-note">
-        目前是展示原型。資料先存在本機瀏覽器，正式收件請先用 Google Form + Google Sheets。
+        <strong>👋 同學會原型</strong>
+        資料先存在本機瀏覽器，正式收件用 Google Form + Sheets。
+      </div>
+
+      <div class="recent-active" id="recentActive" style="display:none;">
+        <h4>最近活躍</h4>
+        <div class="recent-list" id="recentList"></div>
       </div>
 
       <button class="admin-toggle" id="adminToggle" type="button">
@@ -34,9 +43,23 @@
     </aside>
 
     <main class="main">
+      <div class="hot-banner" id="hotBanner" style="display:none;">
+        <div class="hot-icon">✨</div>
+        <div class="hot-text">
+          <strong>本週最熱</strong>
+          <span id="hotBannerText">—</span>
+        </div>
+        <button class="hot-cta" id="hotBannerCta" type="button">去看 →</button>
+      </div>
+
       <header class="topbar">
         <div>
-          <h2 id="viewTitle">投稿</h2>
+          <div class="title-wrap">
+            <h2 id="viewTitle">投稿</h2>
+            <svg class="squiggle" viewBox="0 0 400 14" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 8 Q 30 2, 60 8 T 120 8 T 180 8 T 240 8 T 300 8 T 360 8 T 398 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
           <p id="viewIntro">貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。</p>
         </div>
         <div class="top-actions" data-admin-only>
@@ -60,7 +83,9 @@
         <div class="grid-two">
           <form class="panel form-grid" id="submitForm">
             <label>內容標題
-              <input id="titleInput" required placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解">
+              <input id="titleInput" required
+                placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解"
+                data-rotate-placeholder='["例：三秒 Hook 讓觀眾停下來的短影音拆解","例：保險業務員的信任型短影音","例：把節稅做成故事的 Reels","例：開場一句話讓人想留言的留言鉤","例：用 7 秒講完一個保單觀念"]'>
             </label>
             <label>內容連結（可空白）
               <input id="urlInput" type="url" placeholder="https://...">
@@ -69,7 +94,9 @@
               <input id="authorInput" required placeholder="例：彥廷">
             </label>
             <label>我覺得它有料的原因
-              <textarea id="reasonInput" required placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
+              <textarea id="reasonInput" required
+                placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"
+                data-rotate-placeholder='["它解決了哪個自媒體問題？哪一段值得同學會模仿？","這個 Hook 跟我看過的不一樣，記得收藏","受眾跟我的客戶很像，演算法應該能複製","這篇把抽象觀念用很短的故事說清楚了","作者用很白話的方式講複雜的事，值得學"]'></textarea>
             </label>
             <details class="more-options">
               <summary>更多選項（檔案、類型、補充摘要）</summary>
@@ -209,6 +236,7 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="confetti-host" id="confettiHost" aria-hidden="true"></div>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

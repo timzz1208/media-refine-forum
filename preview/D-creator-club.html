@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 D：創作者俱樂部（優化版）｜自媒體精修論壇 預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #2a1f1a;
+  --muted: #8b7565;
+  --line: #f0e4d6;
+  --line-strong: #e2d2bf;
+  --soft: #fbf3e8;
+  --cream: #fff8ee;
+  --panel: #ffffff;
+  --coral: #ef6c4d;
+  --coral-dark: #d8553a;
+  --coral-soft: #ffe9e0;
+  --peach: #ffb088;
+  --mint: #5ec79a;
+  --amber: #f5a623;
+  --plum: #8b5a8c;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --shadow-sm: 0 2px 6px rgba(42,31,26,.04), 0 1px 2px rgba(42,31,26,.04);
+  --shadow-md: 0 8px 24px rgba(42,31,26,.06), 0 3px 8px rgba(42,31,26,.04);
+  --shadow-coral: 0 8px 22px rgba(239,108,77,.30);
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--cream);
+  background-image:
+    radial-gradient(900px 500px at 100% 0%, rgba(255,176,136,.18), transparent 55%),
+    radial-gradient(700px 500px at 0% 100%, rgba(94,199,154,.10), transparent 55%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 280px minmax(0,1fr); }
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--panel);
+  color: var(--ink);
+  padding: 24px 18px;
+  position: sticky; top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.brand { display: grid; gap: 10px; margin-bottom: 24px; padding: 4px 6px 18px; border-bottom: 1px dashed var(--line-strong); }
+.brand-top { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--coral), var(--peach));
+  color: #fff;
+  font-weight: 800; font-size: 18px;
+  box-shadow: var(--shadow-coral);
+  transform: rotate(-4deg);
+}
+.brand-mark span { transform: rotate(4deg); }
+.brand h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.2; letter-spacing: -.01em; }
+.brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.brand p { margin: 8px 6px 0; color: var(--muted); font-size: 12.5px; line-height: 1.65; }
+
+.nav-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 12px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.nav { display: grid; gap: 4px; }
+.nav-btn {
+  width: 100%; text-align: left;
+  color: #5a4a3e; background: transparent;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+  display: flex; align-items: center; gap: 10px;
+  font-family: inherit;
+}
+.nav-btn::before {
+  content: "·"; font-size: 22px; line-height: 0;
+  color: var(--line-strong);
+  width: 10px; text-align: center;
+}
+.nav-btn:hover { background: var(--soft); color: var(--ink); }
+.nav-btn.active {
+  background: linear-gradient(135deg, var(--coral-soft), #ffefe5);
+  color: var(--coral-dark);
+  font-weight: 700;
+}
+.nav-btn.active::before { color: var(--coral); content: "●"; font-size: 12px; }
+
+.side-card {
+  margin-top: 22px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff4ea, #fce4d6);
+  border: 1px solid var(--coral-soft);
+  font-size: 12.5px; line-height: 1.65;
+  color: #6b4a3a;
+}
+.side-card strong { display: block; color: var(--coral-dark); font-size: 13px; margin-bottom: 4px; }
+
+/* #10 最近活躍 */
+.recent-active {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+}
+.recent-active h4 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.recent-active h4::before { content: "👥"; font-size: 14px; }
+.recent-list { display: grid; gap: 9px; }
+.recent-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12.5px;
+}
+.recent-item .mini-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-size: 12px;
+  flex-shrink: 0;
+}
+.recent-item .recent-text { min-width: 0; flex: 1; }
+.recent-item .recent-name { font-weight: 700; color: var(--ink); }
+.recent-item .recent-action { color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+
+.admin-toggle {
+  margin: 14px 0 0;
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--muted);
+  border: 0;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+
+/* MAIN */
+.main { padding: 32px 38px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+
+/* #7 本週熱投 banner */
+.hot-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 22px;
+  border-radius: var(--radius);
+  background: linear-gradient(120deg, var(--coral) 0%, var(--peach) 60%, #ffd6a8 100%);
+  color: #fff;
+  box-shadow: var(--shadow-coral);
+  position: relative;
+  overflow: hidden;
+}
+.hot-banner::after {
+  content: "";
+  position: absolute;
+  top: -40px; right: -20px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(255,255,255,.30), transparent 70%);
+  pointer-events: none;
+}
+.hot-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.22);
+  display: grid; place-items: center;
+  font-size: 22px;
+  backdrop-filter: blur(8px);
+}
+.hot-text strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  opacity: .85;
+  margin-bottom: 3px;
+}
+.hot-text span {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.hot-text em { font-style: normal; padding: 1px 8px; background: rgba(255,255,255,.25); border-radius: 6px; margin-left: 4px; font-weight: 800; }
+.hot-cta {
+  background: #fff;
+  color: var(--coral-dark);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: transform .14s ease;
+}
+.hot-cta:hover { transform: translateY(-1px) scale(1.03); }
+
+.topbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: end; }
+.kicker {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700;
+  color: var(--coral-dark);
+  background: var(--coral-soft);
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.kicker::before { content: "✦"; }
+.title-wrap { position: relative; display: inline-block; }
+.topbar h2 {
+  margin: 0;
+  font-size: 34px; line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.topbar h2 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--coral), var(--peach));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+}
+/* #5 手繪底線 */
+.squiggle {
+  position: absolute;
+  left: 0; right: 0; bottom: -10px;
+  width: 100%; height: 14px;
+  pointer-events: none;
+  color: var(--coral);
+  opacity: .8;
+}
+.topbar p { margin: 18px 0 0; color: #6b5a50; line-height: 1.7; max-width: 720px; font-size: 14.5px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn {
+  border: 0; cursor: pointer;
+  border-radius: 12px;
+  padding: 11px 18px;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 700; font-size: 13.5px;
+  box-shadow: var(--shadow-coral);
+  transition: all .14s ease;
+  font-family: inherit;
+}
+.btn:hover { background: var(--coral-dark); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(239,108,77,.38); }
+.btn.secondary {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+.btn.secondary:hover { background: var(--soft); transform: translateY(-1px); }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(130px,1fr)); gap: 14px; }
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.stat:nth-child(1)::before { background: var(--coral); }
+.stat:nth-child(2)::before { background: var(--amber); }
+.stat:nth-child(3)::before { background: var(--mint); }
+.stat:nth-child(4)::before { background: var(--plum); }
+.stat::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--coral);
+}
+.stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat strong { display: block; font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.stat span { display: block; color: var(--muted); margin-top: 8px; font-size: 12.5px; font-weight: 600; }
+
+.grid-two { display: grid; grid-template-columns: minmax(320px,440px) minmax(0,1fr); gap: 18px; align-items: start; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.form-grid { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; color: var(--ink); font-weight: 700; font-size: 13px; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: var(--ink);
+  background: var(--cream);
+  font: inherit;
+  font-size: 14px;
+  transition: all .14s ease;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 0;
+  border-color: var(--coral);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--coral-soft);
+}
+textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.panel-title-wrap { position: relative; display: inline-block; margin-bottom: 6px; }
+.panel h3 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.panel-squiggle {
+  position: absolute;
+  left: 0; right: 0; bottom: -8px;
+  width: 100%; height: 8px;
+  pointer-events: none;
+  color: var(--coral);
+  opacity: .7;
+}
+.summary { margin: 10px 0 0; color: #5a4a40; line-height: 1.7; font-size: 14px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--soft);
+  color: #6b4a3a;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pill.hot { background: var(--coral-soft); color: var(--coral-dark); }
+.pill.ready { background: #d6f1e3; color: #1e6b4a; }
+.pill.amber { background: #fef3d4; color: #8c5e0a; }
+.pill.plum { background: #f3e3f4; color: #6a3f6c; }
+
+.item-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  display: grid; gap: 12px;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, border-color .18s ease;
+}
+/* #1 卡片便利貼歪頭 */
+.item-card:hover { transform: rotate(-0.6deg) translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--peach); }
+.item-card:nth-child(2n):hover { transform: rotate(0.5deg) translateY(-3px); }
+.item-card:nth-child(3n):hover { transform: rotate(-0.3deg) translateY(-3px); }
+
+.item-head { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 14px; align-items: start; }
+.avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+  background: linear-gradient(135deg, var(--coral), var(--peach));
+}
+.item-title-block { min-width: 0; }
+.item-title { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.4; letter-spacing: -.01em; }
+.item-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12.5px; margin-top: 5px; font-weight: 500; }
+.score {
+  min-width: 64px; min-height: 56px;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--coral-soft), #ffd5c2);
+  color: var(--coral-dark);
+  font-weight: 900; font-size: 24px;
+  letter-spacing: -.02em;
+  position: relative;
+}
+/* #2 score 分數呼吸 */
+.score::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 18px;
+  border: 2px solid var(--coral);
+  opacity: 0;
+  animation: scorePulse 2.8s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes scorePulse {
+  0% { transform: scale(.92); opacity: 0; }
+  40% { opacity: .35; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+
+/* #6 空狀態 */
+.empty-state {
+  background: var(--panel);
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+.empty-state h4 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--ink); }
+.empty-state p { margin: 0; font-size: 13.5px; line-height: 1.65; }
+.empty-state .btn { margin-top: 14px; }
+
+.preview-tag {
+  position: fixed; right: 18px; top: 18px;
+  background: var(--ink);
+  color: var(--peach);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 99;
+  box-shadow: 0 6px 18px rgba(42,31,26,.20);
+}
+
+/* #8 confetti container */
+.confetti-host { position: fixed; inset: 0; pointer-events: none; z-index: 9998; }
+.toast {
+  position: fixed;
+  right: 24px; bottom: 24px;
+  background: var(--ink);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(42,31,26,.25);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: none;
+  z-index: 9999;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast .toast-icon { font-size: 18px; }
+</style>
+</head>
+<body>
+<div class="preview-tag">方案 D · 創作者俱樂部（優化版）</div>
+<div class="confetti-host" id="confettiHost"></div>
+<div class="toast" id="toast"><span class="toast-icon">🎉</span><span id="toastMsg">投稿成功！</span></div>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-top">
+        <div class="brand-mark"><span>精</span></div>
+        <div>
+          <h1>自媒體精修論壇</h1>
+          <div class="brand-sub">同學會 · 內容精修</div>
+        </div>
+      </div>
+      <p>把同學看到的好內容，煉成可以複製的方法。</p>
+    </div>
+    <div class="nav-label">頻道</div>
+    <nav class="nav">
+      <button class="nav-btn active">投稿</button>
+      <button class="nav-btn">內容池</button>
+      <button class="nav-btn">評分</button>
+      <button class="nav-btn">精修</button>
+      <button class="nav-btn">正式收件</button>
+    </nav>
+    <div class="side-card">
+      <strong>👋 同學會原型</strong>
+      資料先存在本機瀏覽器，正式收件用 Google Form + Sheets。
+    </div>
+
+    <div class="recent-active">
+      <h4>最近活躍</h4>
+      <div class="recent-list">
+        <div class="recent-item">
+          <div class="mini-avatar" data-name="彥廷">彥</div>
+          <div class="recent-text">
+            <div class="recent-name">彥廷</div>
+            <div class="recent-action">剛投了 1 則</div>
+          </div>
+        </div>
+        <div class="recent-item">
+          <div class="mini-avatar" data-name="婷婷">婷</div>
+          <div class="recent-text">
+            <div class="recent-name">婷婷</div>
+            <div class="recent-action">評分 3 則</div>
+          </div>
+        </div>
+        <div class="recent-item">
+          <div class="mini-avatar" data-name="阿凱">凱</div>
+          <div class="recent-text">
+            <div class="recent-name">阿凱</div>
+            <div class="recent-action">15 分鐘前精修</div>
+          </div>
+        </div>
+        <div class="recent-item">
+          <div class="mini-avatar" data-name="Jenny">J</div>
+          <div class="recent-text">
+            <div class="recent-name">Jenny</div>
+            <div class="recent-action">投了 2 則</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="admin-toggle"><span class="admin-dot"></span><span>管理者登入</span></button>
+  </aside>
+
+  <main class="main">
+    <!-- #7 本週熱投 banner -->
+    <div class="hot-banner">
+      <div class="hot-icon">✨</div>
+      <div class="hot-text">
+        <strong>本週最熱</strong>
+        <span>「三秒 Hook 拆解」拿到 <em>4.6 分</em> · 來看看大家怎麼評</span>
+      </div>
+      <button class="hot-cta">去看 →</button>
+    </div>
+
+    <header class="topbar">
+      <div>
+        <span class="kicker">SUBMISSION</span>
+        <div class="title-wrap">
+          <h2>今天看到什麼<em>有料</em>的內容？</h2>
+          <svg class="squiggle" viewBox="0 0 400 14" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 8 Q 30 2, 60 8 T 120 8 T 180 8 T 240 8 T 300 8 T 360 8 T 398 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p>貼上影片或文章連結，補一句你覺得有料的原因，系統會自動分類給其他同學參考。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary">載入示範資料</button>
+        <button class="btn secondary">匯出 JSON</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong data-target="24">0</strong><span>投稿內容</span></div>
+      <div class="stat"><strong data-target="18">0</strong><span>已評分</span></div>
+      <div class="stat"><strong data-target="7">0</strong><span>高分精修池</span></div>
+      <div class="stat"><strong data-target="3">0</strong><span>已萃取</span></div>
+    </section>
+
+    <div class="grid-two">
+      <form class="panel form-grid" id="submitForm">
+        <label>內容標題
+          <input id="titleInput" data-rotate-placeholder='["例：三秒 Hook 讓觀眾停下來的短影音拆解","例：保險業務員的信任型短影音","例：把節稅做成故事的 Reels","例：開場一句話讓人想留言的留言鉤","例：用 7 秒講完一個保單觀念"]'>
+        </label>
+        <label>內容連結（可空白）
+          <input type="url" placeholder="https://...">
+        </label>
+        <label>投稿者
+          <input placeholder="例：彥廷">
+        </label>
+        <label>我覺得它有料的原因
+          <textarea id="reasonInput" data-rotate-placeholder='["它解決了哪個自媒體問題？哪一段值得同學會模仿？","這個 Hook 跟我看過的不一樣，記得收藏","受眾跟我的客戶很像，演算法應該能複製","這篇把抽象觀念用很短的故事說清楚了","作者用很白話的方式講複雜的事，值得學"]'></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" type="button" id="submitBtn">建立內容卡</button>
+          <button class="btn secondary" type="button">清空表單</button>
+        </div>
+      </form>
+
+      <div class="panel">
+        <div class="panel-title-wrap">
+          <h3>分類規則</h3>
+          <svg class="panel-squiggle" viewBox="0 0 200 8" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 4 Q 18 1, 35 4 T 70 4 T 105 4 T 140 4 T 175 4 T 198 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="summary">第一版用關鍵字模擬 AI 分類。未來只要替換分類助手，就能接 AI API，不用重寫整個網頁。</p>
+        <div class="tags">
+          <span class="pill">短影音拆解</span>
+          <span class="pill amber">敘事框架</span>
+          <span class="pill plum">變現案例</span>
+          <span class="pill hot">高分推薦</span>
+          <span class="pill ready">已精修</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 內容池預覽 — 多張卡示範頭像 hash 配色 + 便利貼歪頭 -->
+    <div class="item-card">
+      <div class="item-head">
+        <div class="avatar" data-name="彥廷">彥</div>
+        <div class="item-title-block">
+          <h3 class="item-title">三秒 Hook 讓觀眾停下來的短影音拆解</h3>
+          <div class="item-meta">
+            <span>彥廷</span><span>·</span><span>影片連結</span><span>·</span><span>2026-05-21</span>
+          </div>
+        </div>
+        <div class="score">4.6</div>
+      </div>
+      <p class="summary">把開頭三秒拆成「衝突 → 反差 → 鉤子」三段，最適合保險業務員拍信任型短影音時模仿。</p>
+      <div class="tags">
+        <span class="pill">短影音拆解</span>
+        <span class="pill hot">🔥 高分推薦</span>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div class="avatar" data-name="婷婷">婷</div>
+        <div class="item-title-block">
+          <h3 class="item-title">把節稅做成情感故事的 Reels 案例</h3>
+          <div class="item-meta">
+            <span>婷婷</span><span>·</span><span>影片連結</span><span>·</span><span>2026-05-20</span>
+          </div>
+        </div>
+        <div class="score">4.3</div>
+      </div>
+      <p class="summary">用「媽媽幫女兒準備教育金」的故事帶出節稅工具，3 個鏡頭就把專業話術變成日常對話。</p>
+      <div class="tags">
+        <span class="pill amber">敘事框架</span>
+        <span class="pill hot">🔥 高分推薦</span>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div class="avatar" data-name="阿凱">凱</div>
+        <div class="item-title-block">
+          <h3 class="item-title">保險業務員的 IG 限動經營公式</h3>
+          <div class="item-meta">
+            <span>阿凱</span><span>·</span><span>文章連結</span><span>·</span><span>2026-05-18</span>
+          </div>
+        </div>
+        <div class="score">3.8</div>
+      </div>
+      <p class="summary">每天三則限動：早上一個觀念、中午一個客戶故事、晚上一個生活面。重點在「不要每則都賣」。</p>
+      <div class="tags">
+        <span class="pill plum">變現案例</span>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div class="avatar" data-name="Jenny">J</div>
+        <div class="item-title-block">
+          <h3 class="item-title">把一句話講三遍的開場節奏</h3>
+          <div class="item-meta">
+            <span>Jenny</span><span>·</span><span>逐字稿</span><span>·</span><span>2026-05-17</span>
+          </div>
+        </div>
+        <div class="score">4.1</div>
+      </div>
+      <p class="summary">第一遍直述、第二遍反問、第三遍下結論。短影音的記憶點主要靠這個三拍子。</p>
+      <div class="tags">
+        <span class="pill">短影音拆解</span>
+        <span class="pill ready">已精修</span>
+      </div>
+    </div>
+
+    <!-- #6 空狀態示範 -->
+    <div class="empty-state">
+      <span class="empty-icon">🌱</span>
+      <h4>還沒有 4 分以上的高分內容</h4>
+      <p>同學會剛開張，先去評分區看看其他人的投稿，幫忙打分數～</p>
+      <button class="btn">去評分區</button>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// #9 頭像配色 hash
+const palettes = [
+  ['#ef6c4d', '#ffb088'],  // coral-peach
+  ['#5ec79a', '#a7e6c4'],  // mint
+  ['#f5a623', '#ffd584'],  // amber
+  ['#8b5a8c', '#d4a3d5'],  // plum
+  ['#4a90c9', '#88c0e8'],  // sky
+  ['#e85a8c', '#ffa3c2'],  // pink
+  ['#7c9c5c', '#c2db9c'],  // olive
+  ['#d97757', '#f0a884'],  // terracotta
+];
+function hashName(name) {
+  if (!name) return palettes[0];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return palettes[h % palettes.length];
+}
+function paintAvatars() {
+  document.querySelectorAll('[data-name]').forEach(el => {
+    const [c1, c2] = hashName(el.dataset.name);
+    el.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+  });
+}
+
+// #3 stat 數字跳動
+function countUp() {
+  document.querySelectorAll('.stat strong[data-target]').forEach(el => {
+    const target = parseInt(el.dataset.target, 10);
+    const duration = 900;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+// #4 placeholder 輪播
+function rotatePlaceholders() {
+  document.querySelectorAll('[data-rotate-placeholder]').forEach(el => {
+    let list;
+    try { list = JSON.parse(el.dataset.rotatePlaceholder); } catch { return; }
+    if (!Array.isArray(list) || !list.length) return;
+    let i = 0;
+    el.placeholder = list[0];
+    setInterval(() => {
+      if (document.activeElement === el || el.value) return;
+      i = (i + 1) % list.length;
+      el.placeholder = list[i];
+    }, 4000);
+  });
+}
+
+// #8 送出後小慶祝
+function fireConfetti() {
+  const host = document.getElementById('confettiHost');
+  const colors = ['#ef6c4d','#ffb088','#5ec79a','#f5a623','#8b5a8c','#e85a8c'];
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    const size = 6 + Math.random() * 8;
+    const startX = window.innerWidth / 2 + (Math.random() - 0.5) * 100;
+    const startY = window.innerHeight / 2;
+    const angle = (Math.random() * Math.PI * 2);
+    const velocity = 220 + Math.random() * 280;
+    const dx = Math.cos(angle) * velocity;
+    const dy = Math.sin(angle) * velocity - 200;
+    const rot = (Math.random() - 0.5) * 720;
+    const dur = 900 + Math.random() * 700;
+    piece.style.cssText = `
+      position: absolute;
+      left: ${startX}px; top: ${startY}px;
+      width: ${size}px; height: ${size * 1.4}px;
+      background: ${colors[i % colors.length]};
+      border-radius: 2px;
+      will-change: transform, opacity;
+      transition: transform ${dur}ms cubic-bezier(.2,.6,.4,1), opacity ${dur}ms ease-out;
+    `;
+    host.appendChild(piece);
+    requestAnimationFrame(() => {
+      piece.style.transform = `translate(${dx}px, ${dy + 600}px) rotate(${rot}deg)`;
+      piece.style.opacity = '0';
+    });
+    setTimeout(() => piece.remove(), dur + 100);
+  }
+}
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  paintAvatars();
+  countUp();
+  rotatePlaceholders();
+  document.getElementById('submitBtn').addEventListener('click', () => {
+    fireConfetti();
+    showToast('🎉 投稿成功！你是本週第 5 位同學');
+  });
+});
+</script>
+</body>
+</html>

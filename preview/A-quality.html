@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 A：質感升級｜自媒體精修論壇 預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0f1a21;
+  --muted: #5b6973;
+  --line: #dde5ea;
+  --soft: #f3f7f9;
+  --panel: #ffffff;
+  --accent: #0e7c86;
+  --accent-dark: #095c64;
+  --accent-soft: rgba(14,124,134,.10);
+  --gold: #b87810;
+  --shadow-sm: 0 1px 2px rgba(15,26,33,.04), 0 2px 8px rgba(15,26,33,.04);
+  --shadow-md: 0 6px 16px rgba(15,26,33,.06), 0 12px 32px rgba(15,26,33,.06);
+  --shadow-accent: 0 6px 18px rgba(14,124,134,.22);
+  --radius: 14px;
+  font-family: "Inter", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(14,124,134,.06), transparent 60%),
+    linear-gradient(180deg,#f5f8fb 0%,#eaf1f5 100%);
+  min-height: 100vh;
+  letter-spacing: .01em;
+}
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 268px minmax(0,1fr);
+}
+/* SIDEBAR */
+.sidebar {
+  background: linear-gradient(180deg,#0f2a2e 0%,#13202a 100%);
+  color: #f6fbfc;
+  padding: 28px 20px;
+  position: sticky; top: 0;
+  height: 100vh;
+  border-right: 1px solid rgba(255,255,255,.04);
+}
+.brand { display: grid; gap: 10px; margin-bottom: 32px; }
+.brand-mark {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg,#f6c453,#e3a23b);
+  color: #0f1a21;
+  font-weight: 900; font-size: 18px;
+  box-shadow: 0 4px 12px rgba(246,196,83,.35);
+}
+.brand h1 { margin: 0; font-size: 21px; line-height: 1.3; font-weight: 700; letter-spacing: -.01em; }
+.brand p { margin: 0; color: #a8b9c0; font-size: 13px; line-height: 1.6; }
+.nav { display: grid; gap: 6px; }
+.nav-btn {
+  width: 100%; text-align: left;
+  color: #c8d4d9; background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.nav-btn:hover { background: rgba(255,255,255,.04); color: #fff; }
+.nav-btn.active {
+  color: #0f1a21;
+  background: #f7fafb;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.side-note {
+  margin-top: 28px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.06);
+  color: #a8b9c0;
+  font-size: 12.5px; line-height: 1.65;
+}
+.admin-toggle {
+  margin-top: 16px;
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.03);
+  color: #a8b9c0;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,.08);
+  cursor: pointer;
+}
+.admin-dot { width: 8px; height: 8px; border-radius: 50%; background: #65717a; }
+
+/* MAIN */
+.main { padding: 32px 36px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+.topbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: end; }
+.topbar h2 { margin: 0; font-size: 32px; line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
+.topbar p { margin: 10px 0 0; color: var(--muted); line-height: 1.65; max-width: 760px; font-size: 14.5px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn {
+  border: 0; cursor: pointer;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600; font-size: 14px;
+  box-shadow: var(--shadow-accent);
+  transition: transform .12s ease, box-shadow .12s ease, background .15s ease;
+}
+.btn:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(14,124,134,.30); }
+.btn.secondary {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.btn.secondary:hover { background: var(--soft); border-color: #c5d0d7; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(130px,1fr)); gap: 14px; }
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .12s ease, box-shadow .15s ease;
+}
+.stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat strong { display: block; font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.02em; font-family: "Inter", sans-serif; }
+.stat span { display: block; color: var(--muted); margin-top: 8px; font-size: 13px; }
+
+.grid-two { display: grid; grid-template-columns: minmax(320px,420px) minmax(0,1fr); gap: 16px; align-items: start; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.form-grid { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; color: var(--ink); font-weight: 600; font-size: 13.5px; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 13px;
+  color: var(--ink);
+  background: #fff;
+  font: inherit;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+textarea { min-height: 100px; resize: vertical; line-height: 1.55; }
+.actions { display: flex; gap: 10px; }
+
+.panel h3 { margin: 0 0 8px; font-size: 17px; font-weight: 700; }
+.summary { margin: 0; color: #44535c; line-height: 1.65; font-size: 14px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.pill {
+  display: inline-flex; align-items: center;
+  border-radius: 999px;
+  padding: 5px 11px;
+  background: var(--soft);
+  color: #3c4c55;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill.hot { background: #fff3dc; color: #7d4e05; }
+.pill.ready { background: #dcf2e6; color: #1f6846; }
+
+.item-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: grid; gap: 10px;
+  transition: transform .12s ease, box-shadow .15s ease;
+}
+.item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.item-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: start; }
+.item-title { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.4; }
+.item-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12.5px; }
+.score {
+  min-width: 72px; min-height: 56px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#fff7e8,#ffe9bf);
+  color: var(--gold);
+  font-weight: 900; font-size: 24px;
+  font-family: "Inter", sans-serif;
+}
+.preview-tag {
+  position: fixed; right: 18px; top: 18px;
+  background: rgba(15,26,33,.85);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  z-index: 99;
+}
+</style>
+</head>
+<body>
+<div class="preview-tag">方案 A · 質感升級</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">精</div>
+      <h1>自媒體精修論壇</h1>
+      <p>把同學會成員看到的好內容，煉成可複製的方法、腳本與簡報素材。</p>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active">投稿</button>
+      <button class="nav-btn">內容池</button>
+      <button class="nav-btn">評分</button>
+      <button class="nav-btn">精修</button>
+      <button class="nav-btn">正式收件</button>
+    </nav>
+    <div class="side-note">目前是展示原型。資料先存在本機瀏覽器，正式收件請先用 Google Form + Google Sheets。</div>
+    <button class="admin-toggle"><span class="admin-dot"></span><span>管理者登入</span></button>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2>投稿</h2>
+        <p>貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary">載入示範資料</button>
+        <button class="btn secondary">匯出 JSON</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong>24</strong><span>投稿內容</span></div>
+      <div class="stat"><strong>18</strong><span>已評分</span></div>
+      <div class="stat"><strong>7</strong><span>高分精修池</span></div>
+      <div class="stat"><strong>3</strong><span>已萃取</span></div>
+    </section>
+
+    <div class="grid-two">
+      <form class="panel form-grid">
+        <label>內容標題
+          <input placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解">
+        </label>
+        <label>內容連結（可空白）
+          <input type="url" placeholder="https://...">
+        </label>
+        <label>投稿者
+          <input placeholder="例：彥廷">
+        </label>
+        <label>我覺得它有料的原因
+          <textarea placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" type="button">建立內容卡</button>
+          <button class="btn secondary" type="button">清空表單</button>
+        </div>
+      </form>
+
+      <div class="panel">
+        <h3>分類規則</h3>
+        <p class="summary">第一版用關鍵字模擬 AI 分類。未來只要替換分類助手，就能接 AI API，不用重寫整個網頁。</p>
+        <div class="tags">
+          <span class="pill">短影音拆解</span>
+          <span class="pill">敘事框架</span>
+          <span class="pill">變現案例</span>
+          <span class="pill hot">高分推薦</span>
+          <span class="pill ready">已精修</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div>
+          <h3 class="item-title">三秒 Hook 讓觀眾停下來的短影音拆解</h3>
+          <div class="item-meta">
+            <span>投稿：彥廷</span><span>·</span><span>類型：影片連結</span><span>·</span><span>2026-05-21</span>
+          </div>
+        </div>
+        <div class="score">4.6</div>
+      </div>
+      <p class="summary">把開頭三秒拆成「衝突 → 反差 → 鉤子」三段，最適合保險業務員拍信任型短影音時模仿。</p>
+      <div class="tags">
+        <span class="pill">短影音拆解</span>
+        <span class="pill hot">高分推薦</span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方案 C：現代 SaaS 風｜自媒體精修論壇 預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0f;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+  --soft: #f9fafb;
+  --panel: #ffffff;
+  --accent: #6366f1;
+  --accent-dark: #4f46e5;
+  --accent-soft: #eef2ff;
+  --accent-vivid: #818cf8;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow-xs: 0 1px 2px rgba(10,10,15,.04);
+  --shadow-sm: 0 1px 3px rgba(10,10,15,.06), 0 1px 2px rgba(10,10,15,.04);
+  --shadow-md: 0 4px 12px rgba(10,10,15,.06), 0 2px 4px rgba(10,10,15,.04);
+  --shadow-accent: 0 4px 14px rgba(99,102,241,.30);
+  font-family: "Inter", "Noto Sans TC", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--panel);
+  min-height: 100vh;
+  letter-spacing: -.005em;
+  -webkit-font-smoothing: antialiased;
+}
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0,1fr); }
+
+/* SIDEBAR — 淺色反轉 */
+.sidebar {
+  background: var(--soft);
+  color: var(--ink);
+  padding: 24px 16px;
+  position: sticky; top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--line);
+}
+.brand { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; margin-bottom: 28px; padding: 0 8px; }
+.brand-mark {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-vivid));
+  color: #fff;
+  font-weight: 800; font-size: 15px;
+  box-shadow: var(--shadow-accent);
+}
+.brand-text h1 { margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.brand-text small { color: var(--muted); font-size: 12px; }
+
+.nav-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0 10px;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.nav { display: grid; gap: 2px; }
+.nav-btn {
+  width: 100%; text-align: left;
+  color: #374151; background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: all .12s ease;
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-btn::before {
+  content: ""; width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  flex-shrink: 0;
+}
+.nav-btn:hover { background: rgba(99,102,241,.06); color: var(--ink); }
+.nav-btn:hover::before { background: var(--accent-vivid); }
+.nav-btn.active {
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.nav-btn.active::before { background: var(--accent); }
+
+.side-note {
+  margin: 24px 8px 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: #4338ca;
+  font-size: 12px; line-height: 1.6;
+  border: 1px solid #e0e7ff;
+}
+.admin-toggle {
+  margin: 12px 0 0;
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.admin-toggle:hover { background: rgba(0,0,0,.04); }
+.admin-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+
+/* MAIN */
+.main { padding: 28px 36px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+.topbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; padding-bottom: 4px; }
+.topbar h2 { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; }
+.topbar p { margin: 6px 0 0; color: var(--muted); line-height: 1.55; max-width: 720px; font-size: 14px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn {
+  border: 0; cursor: pointer;
+  border-radius: 10px;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600; font-size: 13.5px;
+  box-shadow: var(--shadow-accent);
+  transition: all .12s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(79,70,229,.35); }
+.btn.secondary {
+  background: var(--panel);
+  color: #374151;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-xs);
+}
+.btn.secondary:hover { background: var(--soft); border-color: var(--line-strong); transform: translateY(-1px); }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(130px,1fr)); gap: 12px; }
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: all .12s ease;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.stat:hover { border-color: var(--line-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.stat::after {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.stat:hover::after { opacity: 1; }
+.stat strong { display: block; font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
+.stat span { display: block; color: var(--muted); margin-top: 6px; font-size: 12.5px; font-weight: 500; }
+
+.grid-two { display: grid; grid-template-columns: minmax(320px,420px) minmax(0,1fr); gap: 16px; align-items: start; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-xs);
+}
+.form-grid { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; color: #1f2937; font-weight: 500; font-size: 13px; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  font: inherit;
+  font-size: 14px;
+  transition: all .12s ease;
+}
+input:hover, textarea:hover, select:hover { border-color: var(--line-strong); }
+input:focus, textarea:focus, select:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+}
+input::placeholder, textarea::placeholder { color: #9ca3af; }
+textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
+.actions { display: flex; gap: 8px; }
+
+.panel h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.summary { margin: 0; color: var(--muted); line-height: 1.6; font-size: 13.5px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  border-radius: 6px;
+  padding: 3px 9px;
+  background: var(--soft);
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+}
+.pill.hot { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.pill.ready { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+.pill.accent { background: var(--accent-soft); color: var(--accent-dark); border-color: #c7d2fe; }
+
+.item-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+  display: grid; gap: 10px;
+  transition: all .15s ease;
+  cursor: pointer;
+}
+.item-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+.item-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: start; }
+.item-title { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: -.01em; }
+.item-meta { display: flex; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+.item-meta span.dot { color: var(--line-strong); }
+.score {
+  min-width: 64px; min-height: 52px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-soft), #fae8ff);
+  color: var(--accent-dark);
+  font-weight: 700; font-size: 22px;
+  border: 1px solid #e0e7ff;
+}
+
+.preview-tag {
+  position: fixed; right: 18px; top: 18px;
+  background: var(--ink);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 99;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.preview-tag::before {
+  content: ""; width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-vivid);
+  box-shadow: 0 0 0 3px rgba(129,140,248,.30);
+}
+</style>
+</head>
+<body>
+<div class="preview-tag">方案 C · 現代 SaaS</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">精</div>
+      <div class="brand-text">
+        <h1>自媒體精修論壇</h1>
+        <small>Refinement Forum</small>
+      </div>
+    </div>
+    <div class="nav-label">Workspace</div>
+    <nav class="nav">
+      <button class="nav-btn active">投稿</button>
+      <button class="nav-btn">內容池</button>
+      <button class="nav-btn">評分</button>
+      <button class="nav-btn">精修</button>
+      <button class="nav-btn">正式收件</button>
+    </nav>
+    <div class="side-note">目前是展示原型。資料先存在本機瀏覽器，正式收件請用 Google Form。</div>
+    <button class="admin-toggle"><span class="admin-dot"></span><span>管理者登入</span></button>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2>投稿</h2>
+        <p>貼上影片或文章連結，補一句你覺得有料的原因，系統會自動分類。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary">載入示範資料</button>
+        <button class="btn secondary">匯出 JSON</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong>24</strong><span>投稿內容</span></div>
+      <div class="stat"><strong>18</strong><span>已評分</span></div>
+      <div class="stat"><strong>7</strong><span>高分精修池</span></div>
+      <div class="stat"><strong>3</strong><span>已萃取</span></div>
+    </section>
+
+    <div class="grid-two">
+      <form class="panel form-grid">
+        <label>內容標題
+          <input placeholder="例：三秒 Hook 讓觀眾停下來的短影音拆解">
+        </label>
+        <label>內容連結（可空白）
+          <input type="url" placeholder="https://...">
+        </label>
+        <label>投稿者
+          <input placeholder="例：彥廷">
+        </label>
+        <label>我覺得它有料的原因
+          <textarea placeholder="它解決了哪個自媒體問題？哪一段值得同學會模仿？"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" type="button">建立內容卡</button>
+          <button class="btn secondary" type="button">清空表單</button>
+        </div>
+      </form>
+
+      <div class="panel">
+        <h3>分類規則</h3>
+        <p class="summary">第一版用關鍵字模擬 AI 分類。未來只要替換分類助手，就能接 AI API，不用重寫整個網頁。</p>
+        <div class="tags">
+          <span class="pill accent">短影音拆解</span>
+          <span class="pill">敘事框架</span>
+          <span class="pill">變現案例</span>
+          <span class="pill hot">高分推薦</span>
+          <span class="pill ready">已精修</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-card">
+      <div class="item-head">
+        <div>
+          <h3 class="item-title">三秒 Hook 讓觀眾停下來的短影音拆解</h3>
+          <div class="item-meta">
+            <span>彥廷</span><span class="dot">·</span><span>影片連結</span><span class="dot">·</span><span>2026-05-21</span>
+          </div>
+        </div>
+        <div class="score">4.6</div>
+      </div>
+      <p class="summary">把開頭三秒拆成「衝突 → 反差 → 鉤子」三段，最適合保險業務員拍信任型短影音時模仿。</p>
+      <div class="tags">
+        <span class="pill accent">短影音拆解</span>
+        <span class="pill hot">高分推薦</span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
