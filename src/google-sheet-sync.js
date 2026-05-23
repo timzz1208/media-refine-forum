@@ -78,6 +78,7 @@ export async function syncItemToGoogleSheet(item) {
     file_urls: (item.sourceFileUrls && item.sourceFileUrls.length ? item.sourceFileUrls.join(", ") : (item.sourceFileUrl || item.sourceFileName || "")),
     system_categories: (item.categories || []).join(" / "),
     tags: (item.tags || []).join(" / "),
+    emotion_tags: (item.emotionTags || []).join(", "),
     average_score: averageScore(item).toFixed(2),
     rating_count: String(item.ratings?.length || 0),
     status: itemStatus(item),
@@ -92,6 +93,63 @@ export async function syncItemToGoogleSheet(item) {
   });
 
   return { skipped: false };
+}
+
+export async function syncFeedbackToSheet(feedback) {
+  if (!isGoogleSheetSyncEnabled()) return { skipped: true };
+
+  const params = new URLSearchParams({
+    action: "save_feedback",
+    timestamp: new Date().toISOString(),
+    id: feedback.id || "",
+    author: feedback.author || "",
+    text: feedback.text || "",
+    screenshot_url: feedback.screenshotUrl || "",
+    screenshot_name: feedback.screenshotName || "",
+    created_at: feedback.createdAt || ""
+  });
+
+  await fetch(`${GOOGLE_SHEET_WEB_APP_URL}?${params.toString()}`, {
+    method: "GET",
+    mode: "no-cors"
+  });
+
+  return { skipped: false };
+}
+
+export async function syncFeedbackReplyToSheet(feedbackId, reply) {
+  if (!isGoogleSheetSyncEnabled()) return { skipped: true };
+
+  const params = new URLSearchParams({
+    action: "save_feedback_reply",
+    timestamp: new Date().toISOString(),
+    feedback_id: feedbackId || "",
+    author: reply.author || "",
+    text: reply.text || "",
+    created_at: reply.createdAt || ""
+  });
+
+  await fetch(`${GOOGLE_SHEET_WEB_APP_URL}?${params.toString()}`, {
+    method: "GET",
+    mode: "no-cors"
+  });
+
+  return { skipped: false };
+}
+
+export async function fetchFeedbackFromSheet() {
+  if (!isGoogleSheetSyncEnabled()) {
+    return { items: [], skipped: true };
+  }
+  const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "list_feedback" })
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || "list failed");
+  return { items: data.items || [], skipped: false };
 }
 
 export async function syncRatingToGoogleSheet(item, rating) {

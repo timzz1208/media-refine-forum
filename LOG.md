@@ -1,5 +1,106 @@
 # 自媒體精修論壇 LOG
 
+## 2026-05-23
+
+### 今日完成 — Layer 1「超低摩擦擷取」改造
+
+收到兩篇關於系統架構演化與營運方向的反饋文章，把產品定位從「群體內容 intelligence」砍回真正眼前的問題：**讓投稿變成自然行為**。先停掉 AI / 爬蟲 / 情緒模型構想，集中火力在「丟進來爽不爽」。
+
+- **首頁從表單改為靈感牆**
+  - 預設打開的頁面從「投稿」(submit) 切到「靈感牆」(pool)
+  - 側欄導覽改名：`投稿` → `詳細投稿`、`內容池` → `靈感牆`
+  - 標題與導文改為社群口吻
+  - 改檔：`index.html`（active section、nav-btn 文字、viewTitle/viewIntro）
+
+- **閃投欄（quick submit bar）**
+  - 靈感牆最頂部加入一個常駐閃投區塊：1 個輸入框 + 1 個感想欄 + 5 個情緒按鈕 + 送出
+  - 自動辨識輸入是 URL 還是標題；URL 自動判斷類型（YouTube / TikTok / IG / 文章）
+  - 5 個情緒選項：🤯 震撼 / 😭 共鳴 / 🔥 想模仿 / 😂 好笑 / 📌 想收藏（可複選 toggle）
+  - 至少有「情緒」或「一句話感想」其中一項才允許送出
+  - 送出後重用現有 `createItem` / `saveItems` / `syncItemToGoogleSheet` / `fireConfetti` 管線
+  - Enter 鍵直接送出
+  - 改檔：`index.html`、`src/app.js`（`handleQuickSubmit`、`EMOTION_MAP`、事件綁定）
+
+- **作者名只問一次**
+  - 新 localStorage key `mrf.author`：第一次投稿時 `prompt` 問名字並記住
+  - 之後所有閃投不再要求填寫
+  - 詳細投稿表單和評分表單也會自動帶入儲存的名字
+  - 閃投欄右側「換名字」按鈕可隨時修改
+  - 改檔：`src/app.js`（`getStoredAuthor` / `setStoredAuthor` / `ensureAuthor` / `updateAuthorHint`）
+
+- **情緒標籤完整接入 schema**
+  - `data-model.js`：`createItem` 新增 `emotionTags: []` 欄位
+  - `cardHtml`：卡片顯示彩色情緒徽章（5 色配對 plum/blue/coral/amber/mint）
+  - `google-sheet-sync.js`：`syncItemToGoogleSheet` 新增 `emotion_tags` 欄位（逗號分隔）
+  - `rowToItem`：從 Sheet 回讀時解析 `emotion_tags` 欄
+  - 改檔：`src/data-model.js`、`src/app.js`、`src/google-sheet-sync.js`
+
+- **樣式**：在 `assets/styles.css` 加入閃投區塊、情緒按鈕、情緒徽章樣式，含 620px 以下 mobile 響應
+
+- **語法驗證**：三個改動的 JS 檔 `node --check` 通過
+
+### 今日判斷
+
+- 第一輪計畫想做 P0~P3（閃投 → 情緒 schema → Claude API → 趨勢雷達），第二篇文章敲醒：MVP 任務不是證明世界觀，是證明「真的有人會自然丟內容」。砍掉 P2 / P3，只做 P0 + P1 的最小版本
+- AI 分析、Hook 拆解、自動雷達全 defer，等實際有內容流動再說（「那時候 AI 才有東西可吃」）
+- 系統定位從「ERP / 管理系統」明確切換為「靈感社群」——首頁要看到內容流，不是看到欄位
+- 既有 9 欄位詳細表單沒刪，留給想填細節的人，但已從預設動線退場
+- 下一步不是寫程式，是「親自當第一個瘋狂使用的人」：每天丟 3 篇 + 標情緒
+
+### 今日完成 — 意見回饋區（同日追加）
+
+用戶要求加一個「使用者反饋區」可上傳截圖 + 管理者回覆。
+
+- **新分頁「意見回饋」**：放在「評分」後面，所有人可見
+- **任何人都可投反饋**：文字（必填）+ 截圖（選填，重用既有 `uploadFileToDrive` 上傳到 Drive）
+- **只有管理者能回覆**：reply form 用 `data-admin-only`，登入管理者模式後才出現
+- **時間顯示**：新增 `timeAgo()` 函式（剛剛 / 分鐘前 / 小時前 / 天前 / 日期）
+- **資料**：新 localStorage key `media_refine_forum_feedback_v1`，schema `{ id, author, text, screenshotUrl, screenshotName, createdAt, replies: [{author, text, createdAt}] }`
+- **Sheet 同步**（前端已寫，後端 Apps Script 需新增 actions 才會真寫入）：
+  - `syncFeedbackToSheet` — `action=save_feedback`
+  - `syncFeedbackReplyToSheet` — `action=save_feedback_reply`
+  - `fetchFeedbackFromSheet` — `action=list_feedback`（fetch 失敗會靜默 fallback 到 localStorage）
+- **進入 feedback 分頁時自動拉取**：8 秒節流
+- **改檔**：
+  - `src/storage.js`：`loadFeedback` / `saveFeedback` + `FEEDBACK_KEY`
+  - `src/google-sheet-sync.js`：三個 feedback sync 函式
+  - `src/app.js`：`feedbacks` state、`renderFeedback` / `feedbackCardHtml` / `timeAgo` / `handleFeedbackSubmit` / `handleFeedbackReply` / `refreshFeedbackFromSheet`、`viewCopy.feedback`、bind feedback form、`maybeAutoRefresh` 擴充
+  - `index.html`：新 nav button + `<section id="feedback">`
+  - `assets/styles.css`：feedback-card / feedback-reply / feedback-screenshot 等樣式
+- **語法**：三個改動 JS 檔 `node --check` 通過
+
+### 今日完成 — 後端 Apps Script 接通（同日追加，clasp 串接）
+
+裝 `@google/clasp` 串接 Apps Script，把後端缺的 actions 一次補齊：
+
+- **安裝 clasp v3.3.0** 並用 `timzz1208usa@gmail.com` 登入 OAuth
+- **Clone Apps Script** 到專案內 `apps-script/` 子資料夾（兩個檔：`程式碼.js`、`appsscript.json`），未來這層也跟著 git 版控
+- **修改 `apps-script/程式碼.js`**：
+  - `ITEM_HEADERS` 尾端加 `emotion_tags`（放尾端而非中間，避免跟既有資料錯位）
+  - 新增常數 `FEEDBACK_SHEET_NAME` / `FEEDBACK_REPLY_SHEET_NAME` / `FEEDBACK_HEADERS` / `FEEDBACK_REPLY_HEADERS`
+  - `doGet` 加三個 action：`save_feedback` / `save_feedback_reply` / `list_feedback`
+  - `doPost` 加 `list_feedback`
+  - 新增 `listFeedback_()` 函式（join 意見回饋與反饋回覆兩張表回傳巢狀結構）
+  - 強化 `getOrCreateSheet_`：對既有 sheet 自動補上缺漏的 header 欄位（emotion_tags 不用人工到 sheet 補標題了）
+- **`clasp push`** 程式碼上線
+- **`clasp deploy -i AKfycbwGuuXCxmud6...`** 更新**既有** deployment（@3 → @4），URL 不變，前端 `src/config.js` 不用改
+- **同步** `docs/google-apps-script-web-app.js` ← `apps-script/程式碼.js`，保持文件一致
+
+### 今日判斷
+
+- 用 clasp 比手動複製貼上強太多：Apps Script 進入 git 版控、改動可 `git revert`、未來改 backend 都能自動化
+- Apps Script v3 部署用 `-i <deploymentId>` 更新既有部署，URL 與權限設定都保留，前端零改動
+- 意見回饋的兩張新分頁不用人工建立 — `appendRow_` 第一次寫入會自動 `insertSheet` + 寫 headers + 凍結首行 + 加粗格式
+- `emotion_tags` 放 `ITEM_HEADERS` 結尾（不是中間），避免既有 14 列資料被欄位偏移破壞
+
+### 待辦 / 後續
+
+- 觀察實際使用：哪種內容最多人丟？哪種情緒最多？大家投完會不會回來？
+- 等有真實流動後再考慮：AI 摘要、本週熱詞、Hook 分析、跨平台雷達
+- 使用者操作行為追蹤（先前討論的 Option A）尚未實作，等基礎流動證實後再做
+
+---
+
 ## 2026-05-21
 
 ### 今日完成

@@ -36,6 +36,7 @@ export function createItem(input) {
     sourceFileUrls: input.sourceFileUrls || [],
     categories: input.categories || [],
     tags: input.tags || [],
+    emotionTags: input.emotionTags || [],
     ratings: input.ratings || [],
     extracted: Boolean(input.extracted),
     createdAt,

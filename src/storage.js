@@ -1,5 +1,6 @@
 const STORAGE_KEY = "media_refine_forum_items_v2";
 const LEGACY_KEY = "media_refine_forum_items_v1";
+const FEEDBACK_KEY = "media_refine_forum_feedback_v1";
 
 export function loadItems() {
   const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY);
@@ -18,6 +19,20 @@ export function saveItems(items) {
 export function clearItems() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LEGACY_KEY);
+}
+
+export function loadFeedback() {
+  const raw = localStorage.getItem(FEEDBACK_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export function saveFeedback(list) {
+  localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
 }
 
 export function downloadText(filename, content, type = "text/plain;charset=utf-8") {

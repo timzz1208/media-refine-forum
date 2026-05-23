@@ -19,9 +19,10 @@
       </div>
 
       <nav class="nav" aria-label="主要頁面">
-        <button class="nav-btn active" data-view="submit">投稿</button>
-        <button class="nav-btn" data-view="pool">內容池</button>
+        <button class="nav-btn active" data-view="pool">靈感牆</button>
+        <button class="nav-btn" data-view="submit">詳細投稿</button>
         <button class="nav-btn" data-view="rate">評分</button>
+        <button class="nav-btn" data-view="feedback">意見回饋</button>
         <button class="nav-btn" data-view="refine" data-admin-only>精修</button>
         <button class="nav-btn" data-view="handoff" data-admin-only>正式收件</button>
       </nav>
@@ -55,12 +56,12 @@
       <header class="topbar">
         <div>
           <div class="title-wrap">
-            <h2 id="viewTitle">投稿</h2>
+            <h2 id="viewTitle">靈感牆</h2>
             <svg class="squiggle" viewBox="0 0 400 14" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M2 8 Q 30 2, 60 8 T 120 8 T 180 8 T 240 8 T 300 8 T 360 8 T 398 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
           </div>
-          <p id="viewIntro">貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。</p>
+          <p id="viewIntro">這裡是同學會的靈感流。看到神內容就丟進來，順手選個感覺。</p>
         </div>
         <div class="top-actions" data-admin-only>
           <button class="btn secondary" id="seedBtn">載入示範資料</button>
@@ -79,7 +80,7 @@
         <div class="stat"><strong id="statExtracted">0</strong><span>已萃取</span></div>
       </section>
 
-      <section class="section active" id="submit">
+      <section class="section" id="submit">
         <div class="grid-two">
           <form class="panel form-grid" id="submitForm">
             <label>內容標題
@@ -132,7 +133,30 @@
         </div>
       </section>
 
-      <section class="section" id="pool">
+      <section class="section active" id="pool">
+        <div class="panel quick-submit-panel">
+          <div class="quick-submit-header">
+            <strong>💭 看到神內容？丟進來</strong>
+            <span id="quickAuthorHint">先告訴我你的名字，之後不會再問。</span>
+          </div>
+          <div class="quick-submit-body">
+            <input id="flashInput" placeholder="貼上連結，或打一句話的標題…"
+              data-rotate-placeholder='["貼上連結，或打一句話的標題…","看到神Hook？貼這裡","這個短影音值得學","這個開場我想模仿"]'>
+            <input id="flashReason" placeholder="一句話感想（可空白）">
+            <div class="emotion-picker" id="emotionPicker">
+              <button type="button" class="emotion-btn" data-emotion="震撼">🤯 震撼</button>
+              <button type="button" class="emotion-btn" data-emotion="共鳴">😭 共鳴</button>
+              <button type="button" class="emotion-btn" data-emotion="想模仿">🔥 想模仿</button>
+              <button type="button" class="emotion-btn" data-emotion="好笑">😂 好笑</button>
+              <button type="button" class="emotion-btn" data-emotion="想收藏">📌 想收藏</button>
+            </div>
+            <div class="quick-submit-actions">
+              <button class="btn" id="flashSubmit" type="button">送出 ⚡</button>
+              <button class="btn secondary" id="changeAuthorBtn" type="button">換名字</button>
+            </div>
+          </div>
+        </div>
+
         <div class="panel">
           <div class="filters">
             <input id="searchInput" placeholder="搜尋標題、原因、摘要、標籤">
@@ -201,6 +225,31 @@
               <button class="btn secondary" id="markDoneBtn">標記已萃取</button>
             </div>
             <pre class="output" id="extractOutput">請先從左側選擇一筆高分內容。</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="feedback">
+        <div class="grid-two">
+          <div class="panel">
+            <h3>💬 跟我們說</h3>
+            <p class="summary">哪裡卡卡的？哪裡可以改？貼一張截圖會更清楚。</p>
+            <form class="form-grid spacing-top" id="feedbackForm">
+              <label>描述問題或建議
+                <textarea id="feedbackText" required placeholder="例：手機上閃投欄字體太小、希望有黑暗模式…"></textarea>
+              </label>
+              <label>截圖（可選）
+                <input id="feedbackFile" type="file" accept="image/*">
+              </label>
+              <div class="actions">
+                <button class="btn" type="submit">送出反饋</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel">
+            <h3>🗨️ 大家的反饋</h3>
+            <p class="summary">管理者會在這裡回覆。</p>
+            <div class="feedback-list" id="feedbackList"></div>
           </div>
         </div>
       </section>

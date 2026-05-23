@@ -1,17 +1,53 @@
 import { categoryRules, classify, inferTags } from "./classifier.js";
 import { createItem, schemaFields } from "./data-model.js";
 import { buildExtraction } from "./refine.js";
-import { fetchItemsFromSheet, isGoogleSheetSyncEnabled, syncItemToGoogleSheet, syncRatingToGoogleSheet, uploadFileToDrive } from "./google-sheet-sync.js";
+import { fetchFeedbackFromSheet, fetchItemsFromSheet, isGoogleSheetSyncEnabled, syncFeedbackReplyToSheet, syncFeedbackToSheet, syncItemToGoogleSheet, syncRatingToGoogleSheet, uploadFileToDrive } from "./google-sheet-sync.js";
 import { averageScore, itemStatus, toFixedScore } from "./rating.js";
-import { clearItems, downloadText, exportCsv, exportJson, loadItems, readJsonFile, saveItems } from "./storage.js";
+import { clearItems, downloadText, exportCsv, exportJson, loadFeedback, loadItems, readJsonFile, saveFeedback, saveItems } from "./storage.js";
 
 let items = loadItems();
+let feedbacks = loadFeedback();
 let selectedRefineId = null;
 
 const el = id => document.getElementById(id);
 
 const ADMIN_PASSWORD = "polo114477";
 const ADMIN_STORAGE_KEY = "mrf.admin";
+const AUTHOR_STORAGE_KEY = "mrf.author";
+
+const EMOTION_MAP = {
+  "震撼":   { emoji: "🤯", class: "plum" },
+  "共鳴":   { emoji: "😭", class: "blue" },
+  "想模仿": { emoji: "🔥", class: "coral" },
+  "好笑":   { emoji: "😂", class: "amber" },
+  "想收藏": { emoji: "📌", class: "mint" }
+};
+
+function getStoredAuthor() {
+  try { return localStorage.getItem(AUTHOR_STORAGE_KEY) || ""; }
+  catch { return ""; }
+}
+function setStoredAuthor(name) {
+  try { localStorage.setItem(AUTHOR_STORAGE_KEY, name); }
+  catch {}
+}
+function ensureAuthor() {
+  let name = getStoredAuthor();
+  if (name) return name;
+  const input = (prompt("先告訴大家你叫什麼？（之後不會再問）") || "").trim();
+  if (input) {
+    setStoredAuthor(input);
+    updateAuthorHint();
+    return input;
+  }
+  return "";
+}
+function updateAuthorHint() {
+  const node = el("quickAuthorHint");
+  if (!node) return;
+  const name = getStoredAuthor();
+  node.textContent = name ? `目前以「${name}」身份投稿` : "先告訴我你的名字，之後不會再問。";
+}
 
 function isAdmin() {
   try {
@@ -50,9 +86,10 @@ function handleAdminToggle() {
 }
 
 const viewCopy = {
-  submit: ["投稿", "貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。"],
-  pool: ["內容池", "查看所有投稿，依分類、狀態、分數篩選，找出值得精修的內容。"],
+  submit: ["詳細投稿", "貼上影片或文章連結，補一句你覺得有料的原因，系統會先用文字線索自動分類。"],
+  pool: ["靈感牆", "這裡是同學會的靈感流。看到神內容就丟進來，順手選個感覺。"],
   rate: ["評分", "用五個維度評估內容是否真的能被同學會拿來使用。"],
+  feedback: ["意見回饋", "哪裡卡卡的？哪裡可以改？貼一張截圖會更清楚。"],
   refine: ["精修", "把高分內容萃取成方法論、腳本模板、PPT 大綱與 DEMO CLAUDE 筆記草稿。"],
   handoff: ["正式收件", "目前原型先跑流程；正式要收到學員投稿，建議用 Google Form + Google Sheets。"]
 };
@@ -300,6 +337,12 @@ function cardHtml(item) {
       <p class="summary">${escapeHtml(item.reason)}</p>
       <div class="tags">
         <span class="pill ${statusClass}">${statusLabel}</span>
+        ${(item.emotionTags || []).map(em => {
+          const meta = EMOTION_MAP[em];
+          return meta
+            ? `<span class="emotion-pill ${meta.class}">${meta.emoji} ${escapeHtml(em)}</span>`
+            : `<span class="emotion-pill plum">${escapeHtml(em)}</span>`;
+        }).join("")}
         ${item.categories.map(cat => `<span class="pill">${escapeHtml(cat)}</span>`).join("")}
         ${item.tags.map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}
       </div>
@@ -375,6 +418,185 @@ function renderRefineList() {
   });
 }
 
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(diff)) return "";
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "剛剛";
+  if (m < 60) return `${m} 分鐘前`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} 小時前`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} 天前`;
+  return new Date(iso).toLocaleDateString("zh-TW");
+}
+
+function feedbackCardHtml(feedback) {
+  const replies = (feedback.replies || []).map(reply => `
+    <div class="feedback-reply">
+      <div class="feedback-reply-meta">
+        <strong>${escapeHtml(reply.author || "管理者")}</strong>${escapeHtml(timeAgo(reply.createdAt))}
+      </div>
+      <div class="feedback-reply-text">${escapeHtml(reply.text)}</div>
+    </div>
+  `).join("");
+
+  const screenshot = feedback.screenshotUrl
+    ? `<a href="${escapeHtml(feedback.screenshotUrl)}" target="_blank" rel="noreferrer"><img class="feedback-screenshot" src="${escapeHtml(feedback.screenshotUrl)}" alt="截圖" loading="lazy"></a>`
+    : "";
+
+  return `
+    <article class="feedback-card" data-feedback-id="${escapeHtml(feedback.id)}">
+      <div class="feedback-head">
+        <div class="mini-avatar" data-name="${escapeHtml(feedback.author || "匿名")}">${escapeHtml(avatarLetter(feedback.author))}</div>
+        <div class="feedback-meta">
+          <span class="feedback-author">${escapeHtml(feedback.author || "匿名")}</span>
+          <span class="feedback-time">${escapeHtml(timeAgo(feedback.createdAt))}</span>
+        </div>
+      </div>
+      <div class="feedback-body">${escapeHtml(feedback.text)}</div>
+      ${screenshot}
+      ${replies ? `<div class="feedback-replies">${replies}</div>` : ""}
+      <div class="feedback-reply-form" data-admin-only>
+        <textarea data-reply-input placeholder="以管理者身份回覆…"></textarea>
+        <button class="btn" type="button" data-reply-submit>回覆</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderFeedback() {
+  const node = el("feedbackList");
+  if (!node) return;
+  const sorted = [...feedbacks].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  node.innerHTML = sorted.length
+    ? sorted.map(feedbackCardHtml).join("")
+    : `<div class="feedback-empty">還沒有人留言，你是第一個。</div>`;
+  paintAvatars(node);
+
+  node.querySelectorAll("[data-reply-submit]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".feedback-card");
+      const id = card?.dataset.feedbackId;
+      const input = card?.querySelector("[data-reply-input]");
+      if (!id || !input) return;
+      handleFeedbackReply(id, input.value.trim());
+      input.value = "";
+    });
+  });
+}
+
+async function handleFeedbackSubmit(event) {
+  event.preventDefault();
+  const text = el("feedbackText").value.trim();
+  if (!text) {
+    toast("先寫一下想說什麼～");
+    return;
+  }
+  const author = ensureAuthor();
+  if (!author) {
+    toast("還是要有個名字才能留言～");
+    return;
+  }
+
+  let screenshotUrl = "";
+  let screenshotName = "";
+  const file = el("feedbackFile").files?.[0];
+  if (file) {
+    if (isGoogleSheetSyncEnabled()) {
+      toast("上傳截圖中…");
+      try {
+        const result = await uploadFileToDrive(file);
+        if (result?.url) {
+          screenshotUrl = result.url;
+          screenshotName = file.name;
+        }
+      } catch (err) {
+        console.error("feedback screenshot upload failed", err);
+        toast("截圖上傳失敗，反饋仍會送出。");
+      }
+    } else {
+      screenshotName = file.name;
+    }
+  }
+
+  const feedback = {
+    id: `feedback-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    author,
+    text,
+    screenshotUrl,
+    screenshotName,
+    createdAt: new Date().toISOString(),
+    replies: []
+  };
+
+  feedbacks.unshift(feedback);
+  saveFeedback(feedbacks);
+
+  syncFeedbackToSheet(feedback).catch(() => {});
+
+  el("feedbackText").value = "";
+  el("feedbackFile").value = "";
+
+  toast("收到！謝謝你的反饋 💌");
+  renderFeedback();
+}
+
+function handleFeedbackReply(feedbackId, text) {
+  if (!text) {
+    toast("回覆內容不能是空的～");
+    return;
+  }
+  if (!isAdmin()) {
+    toast("只有管理者能回覆反饋。");
+    return;
+  }
+  const feedback = feedbacks.find(f => f.id === feedbackId);
+  if (!feedback) return;
+  const reply = {
+    author: getStoredAuthor() || "管理者",
+    text,
+    createdAt: new Date().toISOString()
+  };
+  feedback.replies = feedback.replies || [];
+  feedback.replies.push(reply);
+  saveFeedback(feedbacks);
+
+  syncFeedbackReplyToSheet(feedback.id, reply).catch(() => {});
+
+  toast("已回覆。");
+  renderFeedback();
+}
+
+async function refreshFeedbackFromSheet() {
+  if (!isGoogleSheetSyncEnabled()) return;
+  try {
+    const { items: rows, skipped } = await fetchFeedbackFromSheet();
+    if (skipped || !Array.isArray(rows) || !rows.length) return;
+    feedbacks = rows.map(row => ({
+      id: String(row.id || `feedback-${row.created_at || ""}`),
+      author: String(row.author || ""),
+      text: String(row.text || ""),
+      screenshotUrl: String(row.screenshot_url || ""),
+      screenshotName: String(row.screenshot_name || ""),
+      createdAt: String(row.created_at || ""),
+      replies: Array.isArray(row.replies)
+        ? row.replies.map(r => ({
+            author: String(r.author || ""),
+            text: String(r.text || ""),
+            createdAt: String(r.created_at || "")
+          }))
+        : []
+    })).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    saveFeedback(feedbacks);
+    renderFeedback();
+  } catch (err) {
+    // 後端尚未支援 list_feedback，靜默 fallback 到 localStorage
+    console.info("feedback sheet fetch skipped:", err.message || err);
+  }
+}
+
 function renderAll() {
   renderStats();
   renderLegend();
@@ -383,16 +605,26 @@ function renderAll() {
   renderRefineList();
   renderHotBanner();
   renderRecentActive();
+  renderFeedback();
 }
 
 let lastAutoRefresh = 0;
+let lastFeedbackRefresh = 0;
 function maybeAutoRefresh(view) {
-  if (view !== "pool" && view !== "rate") return;
   if (!isGoogleSheetSyncEnabled()) return;
   const now = Date.now();
-  if (now - lastAutoRefresh < 8000) return;
-  lastAutoRefresh = now;
-  refreshFromSheet({ silent: true });
+  if (view === "pool" || view === "rate") {
+    if (now - lastAutoRefresh >= 8000) {
+      lastAutoRefresh = now;
+      refreshFromSheet({ silent: true });
+    }
+  }
+  if (view === "feedback") {
+    if (now - lastFeedbackRefresh >= 8000) {
+      lastFeedbackRefresh = now;
+      refreshFeedbackFromSheet();
+    }
+  }
 }
 
 function setView(view) {
@@ -437,6 +669,7 @@ function rowToItem(row) {
     sourceFileUrls: fileUrls,
     categories: String(row.system_categories || "").split(/\s*\/\s*/).filter(Boolean),
     tags: String(row.tags || "").split(/\s*\/\s*/).filter(Boolean),
+    emotionTags: String(row.emotion_tags || "").split(/\s*,\s*/).filter(Boolean),
     ratings,
     extracted: String(row.extracted || "").toLowerCase() === "yes",
     createdAt,
@@ -560,10 +793,104 @@ function seedDemo() {
   toast("示範資料已載入。");
 }
 
+async function handleQuickSubmit() {
+  const rawInput = el("flashInput").value.trim();
+  if (!rawInput) {
+    toast("先貼個連結或寫個標題吧～");
+    el("flashInput").focus();
+    return;
+  }
+
+  const author = ensureAuthor();
+  if (!author) {
+    toast("還是要有個名字才能投稿～");
+    return;
+  }
+
+  const reason = el("flashReason").value.trim();
+  const selectedEmotions = Array.from(document.querySelectorAll(".emotion-btn.selected"))
+    .map(btn => btn.dataset.emotion);
+
+  if (selectedEmotions.length === 0 && !reason) {
+    toast("選個感覺，或寫一句感想都可以～");
+    return;
+  }
+
+  const isUrl = /^https?:\/\//i.test(rawInput);
+  let title = rawInput;
+  let url = "";
+  let type = "手動筆記";
+  if (isUrl) {
+    url = rawInput;
+    type = /youtube|youtu\.be/i.test(rawInput) ? "影片連結"
+         : /tiktok|instagram|threads/i.test(rawInput) ? "影片連結"
+         : "文章連結";
+    title = reason || `[未命名] ${new URL(rawInput).hostname}`;
+  }
+
+  const base = {
+    title,
+    url,
+    type,
+    author,
+    reason: reason || `（${selectedEmotions.join(" / ")}）`,
+    notes: "",
+    sourceFileName: "",
+    sourceFileUrls: [],
+    emotionTags: selectedEmotions
+  };
+
+  const categories = classify(`${base.title} ${base.reason}`);
+  const item = createItem({ ...base, categories, tags: inferTags(base) });
+  items.unshift(item);
+  saveItems(items);
+
+  syncItemToGoogleSheet(item).then(result => {
+    if (!result.skipped) toast("已同步到 Google Sheet。");
+  }).catch(() => toast("本機已保存，Google Sheet 同步失敗。"));
+
+  el("flashInput").value = "";
+  el("flashReason").value = "";
+  document.querySelectorAll(".emotion-btn.selected").forEach(b => b.classList.remove("selected"));
+
+  fireConfetti();
+  toast(`🎉 投稿成功！你是同學會第 ${items.length} 則。`);
+  renderAll();
+}
+
 function bindEvents() {
   document.querySelectorAll(".nav-btn").forEach(button => {
     button.addEventListener("click", () => setView(button.dataset.view));
   });
+
+  // 閃投欄 — emotion buttons toggle
+  document.querySelectorAll(".emotion-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("selected");
+    });
+  });
+  const flashSubmitBtn = el("flashSubmit");
+  if (flashSubmitBtn) flashSubmitBtn.addEventListener("click", handleQuickSubmit);
+  const flashInput = el("flashInput");
+  if (flashInput) flashInput.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleQuickSubmit();
+    }
+  });
+  const changeAuthorBtn = el("changeAuthorBtn");
+  if (changeAuthorBtn) changeAuthorBtn.addEventListener("click", () => {
+    const current = getStoredAuthor();
+    const next = (prompt("換個名字？", current) || "").trim();
+    if (next) {
+      setStoredAuthor(next);
+      updateAuthorHint();
+      toast(`已換成「${next}」`);
+    }
+  });
+
+  const feedbackForm = el("feedbackForm");
+  if (feedbackForm) feedbackForm.addEventListener("submit", handleFeedbackSubmit);
 
   ["searchInput", "categoryFilter", "statusFilter", "scoreFilter"].forEach(id => {
     el(id).addEventListener("input", renderPool);
@@ -725,6 +1052,15 @@ renderSchema();
 bindEvents();
 applyAdminState();
 setupPlaceholderRotation();
+updateAuthorHint();
+// 把儲存的作者名帶入詳細投稿表單
+(function prefillAuthor() {
+  const stored = getStoredAuthor();
+  const authorInput = el("authorInput");
+  const ratingByInput = el("ratingBy");
+  if (stored && authorInput && !authorInput.value) authorInput.value = stored;
+  if (stored && ratingByInput && !ratingByInput.value) ratingByInput.value = stored;
+})();
 renderAll();
 console.info(syncLabel());
 refreshFromSheet({ silent: true });
