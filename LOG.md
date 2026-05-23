@@ -93,11 +93,39 @@
 - 意見回饋的兩張新分頁不用人工建立 — `appendRow_` 第一次寫入會自動 `insertSheet` + 寫 headers + 凍結首行 + 加粗格式
 - `emotion_tags` 放 `ITEM_HEADERS` 結尾（不是中間），避免既有 14 列資料被欄位偏移破壞
 
+### 今日完成 — PWA + Web Share Target（同日追加）
+
+用戶意識到團隊已經在 IG 群組自然分享內容了，問能不能把論壇接到那個現場行為。結論：IG DM 抓取技術上走不通（Meta 鎖死），但可以讓**搬運自己變得超輕**。
+
+把論壇升級為 PWA 並註冊成 Android 系統分享目標，從 IG 看到神內容 → 分享 → 選「精修」→ 自動帶連結 → 送，整路 3 tap 完事。
+
+- **`manifest.json`**：標準 PWA manifest + `share_target`（GET，吃 `title` / `text` / `url` 三個參數），名稱「自媒體精修論壇」、短名「精修」、theme color 珊瑚 `#ef6c4d`
+- **`sw.js`**：最小 service worker（install + activate + 空 fetch handler）— Chrome 把網站視為可安裝 PWA 的必要條件
+- **`icons/`**：用 PowerShell + `System.Drawing` 生成
+  - `icon-192.png`（圓角珊瑚漸層 + 白色「精」字）
+  - `icon-512.png`（同樣風格、大尺寸）
+  - `icon-maskable.png`（滿版設計，符合 Android 自適應 icon 安全區規範）
+- **`index.html`** 加 manifest 連結、theme-color、apple-touch-icon、apple/android web-app-capable meta；body 結尾註冊 service worker
+- **`src/app.js`** 新增 `applyShareParams()`：頁面開啟時讀 `?url=...&text=...&title=...`，自動切到靈感牆、帶入閃投欄、focus 到感想欄、清掉網址列參數防重複觸發、跳 toast「從 IG 拉進來囉」
+- **同檔內變更**：startup 流程在 `renderAll()` 後呼叫 `applyShareParams()`
+
+### 為什麼選 PWA 而不是 IG 爬取
+
+- Meta Instagram Messaging API 只給 Business 帳號回客服訊息用，**不能讀群組訊息**
+- 群組訊息爬取會違反 ToS，封號風險
+- 真正的解法：去行為發生的地方接得**更近**，而不是事後爬資料 — 讓論壇出現在 IG 的分享選單裡
+
+### Android vs iPhone
+
+- Samsung / Android：Chrome 或 Samsung Internet 開論壇 → 安裝 → 自動出現在系統分享選單（最佳體驗）
+- iPhone：Safari「加入主畫面」可用，但 iOS 不支援 Web Share Target，要用 iOS Shortcuts 才能在分享選單看到，這個之後再補
+
 ### 待辦 / 後續
 
 - 觀察實際使用：哪種內容最多人丟？哪種情緒最多？大家投完會不會回來？
 - 等有真實流動後再考慮：AI 摘要、本週熱詞、Hook 分析、跨平台雷達
 - 使用者操作行為追蹤（先前討論的 Option A）尚未實作，等基礎流動證實後再做
+- iPhone 用戶的 iOS Shortcut JSON（給彥廷以外的 iPhone 同學會成員）
 
 ---
 

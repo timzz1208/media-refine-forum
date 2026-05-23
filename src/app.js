@@ -1047,6 +1047,45 @@ function bindEvents() {
   });
 }
 
+// 處理從 share target / 外部連結帶進來的參數
+function applyShareParams() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl = (params.get("url") || "").trim();
+  const sharedText = (params.get("text") || "").trim();
+  const sharedTitle = (params.get("title") || "").trim();
+
+  if (!sharedUrl && !sharedText && !sharedTitle) return;
+
+  const flashInput = el("flashInput");
+  const flashReason = el("flashReason");
+  if (!flashInput || !flashReason) return;
+
+  const urlMatch = sharedText.match(/https?:\/\/\S+/);
+  let url = sharedUrl || (urlMatch ? urlMatch[0] : "");
+  let reasonParts = [];
+  if (sharedTitle) reasonParts.push(sharedTitle);
+  if (sharedText) {
+    const cleaned = url ? sharedText.replace(url, "").trim() : sharedText;
+    if (cleaned) reasonParts.push(cleaned);
+  }
+
+  if (url) {
+    flashInput.value = url;
+  } else if (sharedTitle || sharedText) {
+    flashInput.value = sharedTitle || sharedText;
+    reasonParts = sharedTitle && sharedText ? [sharedText] : [];
+  }
+  if (reasonParts.length) flashReason.value = reasonParts.join(" — ");
+
+  setView("pool");
+  setTimeout(() => flashReason.focus(), 100);
+
+  // 清掉網址列參數，重新整理不會再觸發
+  history.replaceState(null, "", window.location.pathname + window.location.hash);
+
+  toast("從 IG 拉進來囉，選個感覺就送 🚀");
+}
+
 renderFilters();
 renderSchema();
 bindEvents();
@@ -1062,5 +1101,6 @@ updateAuthorHint();
   if (stored && ratingByInput && !ratingByInput.value) ratingByInput.value = stored;
 })();
 renderAll();
+applyShareParams();
 console.info(syncLabel());
 refreshFromSheet({ silent: true });
